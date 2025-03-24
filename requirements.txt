@@ -1,0 +1,5 @@
+requests
+click
+rich
+pytest
+loguru

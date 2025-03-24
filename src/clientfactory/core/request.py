@@ -132,7 +132,6 @@ class Request:
         # return new instance
         return self.__class__(**params)
 
-
 class RequestFactory:
     """Factory for creating requests with shared configuration"""
 

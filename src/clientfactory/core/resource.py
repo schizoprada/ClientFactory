@@ -9,7 +9,8 @@ and handles the conversion of method calls to HTTP requests
 from __future__ import annotations
 import re, inspect, typing as t
 from dataclasses import dataclass, field
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse, urlunparse
+from loguru import logger as log
 
 from clientfactory.core.request import Request, RequestMethod
 from clientfactory.core.session import Session
@@ -57,6 +58,8 @@ class Resource:
     def  __init__(self, session: Session, config: ResourceConfig):
         self._session = session
         self._config = config
+        log.debug(f"Initializing resource: {config.name} with path: {config.path}")
+        log.debug(f"Resource parent: {config.parent}")
         self._setup()
 
     def _getfullpath(self, path: t.Optional[str] = None) -> str:
@@ -67,15 +70,22 @@ class Resource:
         while current:
             if hasattr(current, 'path') and current.path:
                 parts.append(current.path)
+                log.debug(f"Adding path part: {current.path}")
             current = getattr(current, 'parent', None)
+            log.debug(f"Moving to parent: {current}")
 
         # reverse to get root-> leaf order
         parts.reverse()
+        log.debug(f"Path parts after reverse: {parts}")
 
         # add method path if provided
         if path:
             parts.append(path)
-        return '/'.join(part.strip('/') for part in parts if part)
+            log.debug(f"Added method path: {path}")
+
+        finalpath = '/'.join(part.strip('/') for part in parts if part)
+        log.debug(f"Final constructed path: {finalpath}")
+        return finalpath
 
     def _substitutepathparams(self, path: str, args: tuple, kwargs: dict) -> str:
         """Replace path parameters with values from args or kwargs"""
@@ -84,57 +94,131 @@ class Resource:
 
         parampattern = r'\{([^}]+)\}'
         params = re.findall(parampattern, path)
+        log.debug(f"Path parameters found: {params}")
 
         if not params:
             return path
 
         if args:
+            log.debug(f"Using positional args for path params: {args}")
             if len(args) != len(params):
                 raise ResourceError(
-                    f"Expected {len(params)} positional arguments"
+                    f"Expected {len(params)} positional arguments "
                     f"({', '.join(params)}), got {len(args)}"
                 )
             for param, arg in zip(params, args):
                 path = path.replace(f"{{{param}}}", str(arg))
         else:
+            log.debug(f"Using keyword args for path params: {kwargs}")
             for param in params:
                 if param not in kwargs:
                     raise ResourceError(f"Missing required path parameter: '{param}'")
                 path = path.replace(f"{{{param}}}", str(kwargs.pop(param)))
+                log.debug(f"Replaced param {param} in path, now: {path}")
 
         return path
 
+    def _getbaseurl(self) -> t.Optional[str]:
+        """Get the base URL from the client"""
+        current = self._config.parent
+        log.debug(f"Getting base URL, starting with parent: {current}")
+
+        while current:
+            log.debug(f"Checking parent: {current}")
+            if hasattr(current, 'baseurl'):
+                log.debug(f"Found baseurl: {current.baseurl}")
+                return current.baseurl
+            current = getattr(current, 'parent', None)
+            log.debug(f"Moving to next parent: {current}")
+
+        log.warning("No baseurl found in parent chain")
+        return None
+
+    def _buildurl(self, path: str) -> str:
+        """Build a full URL from base URL and path"""
+        baseurl = self._getbaseurl()
+        log.debug(f"Building URL with baseurl: {baseurl} and path: {path}")
+
+        if not baseurl:
+            log.warning(f"No baseurl available, returning path only: {path}")
+            return path
+
+        # Ensure baseurl has a trailing slash for proper joining
+        if not baseurl.endswith('/'):
+            baseurl += '/'
+            log.debug(f"Added trailing slash to baseurl: {baseurl}")
+
+        # If path starts with slash, remove it for proper joining
+        if path.startswith('/'):
+            path = path[1:]
+            log.debug(f"Removed leading slash from path: {path}")
+
+        # Join paths properly
+        fullurl = urljoin(baseurl, path)
+        log.debug(f"Final URL after joining: {fullurl}")
+        return fullurl
 
     def _buildrequest(self, cfg: MethodConfig, *args, **kwargs) -> Request:
-        path = self._getfullpath(cfg.path)
-        url = self._substitutepathparams(path, args, kwargs)
+        """Build a request object for the method"""
+        log.debug(f"Building request for method: {cfg.name} with path: {cfg.path}")
+        log.debug(f"Args: {args}, Kwargs: {kwargs}")
 
+        # Get the resource path
+        resourcepath = self._getfullpath(cfg.path)
+        log.debug(f"Full resource path: {resourcepath}")
+
+        # Substitute path parameters
+        resourcepath = self._substitutepathparams(resourcepath, args, kwargs)
+        log.debug(f"Path after parameter substitution: {resourcepath}")
+
+        # Build the complete URL
+        url = self._buildurl(resourcepath)
+        log.debug(f"Final URL: {url}")
+
+        # Process payload if available
         if cfg.payload:
             try:
+                log.debug(f"Processing payload for method {cfg.method}")
                 if cfg.method in (RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH):
                    payloaddata = cfg.payload.apply(kwargs)
                    kwargs['json'] = payloaddata
+                   log.debug(f"Added JSON payload: {payloaddata}")
                 else:
                     kwargs['params'] = cfg.payload.apply(kwargs)
+                    log.debug(f"Added query params: {kwargs['params']}")
             except Exception as e:
+                log.error(f"Error processing payload: {str(e)}")
                 raise ResourceError(f"Error processing payload: {str(e)}")
 
-        return Request(
+        # Create and return the request
+        reqkwargs = {k:v for k, v in kwargs.items() if not hasattr(cfg, 'payload') or k not in getattr(cfg.payload, 'parameters', {})}
+        log.debug(f"Creating request with method: {cfg.method}, url: {url}, kwargs: {reqkwargs}")
+
+        request = Request(
             method=cfg.method,
             url=url,
-            **{k:v for k, v in kwargs.items() if k not in getattr(cfg.payload, 'parameters', {})}
+            **reqkwargs
         )
+        log.debug(f"Created request: {request}")
+        return request
 
     def _createmethod(self, cfg: MethodConfig) -> t.Callable:
         """Create a callable method from method configuration"""
         def method(*args, **kwargs):
+            log.debug(f"Calling method: {cfg.name}")
             request = self._buildrequest(cfg, *args, **kwargs)
             if cfg.preprocess:
+                log.debug(f"Applying preprocessor to request")
                 request = cfg.preprocess(request)
-                response = self._session.send(request)
-                if cfg.postprocess:
-                    return cfg.postprocess(response)
-                return response
+
+            log.debug(f"Sending request: {request}")
+            response = self._session.send(request)
+            log.debug(f"Received response: status={response.statuscode}")
+
+            if cfg.postprocess:
+                log.debug(f"Applying postprocessor to response")
+                return cfg.postprocess(response)
+            return response
         method.__name__ = cfg.name
         method.__doc__ = cfg.description
         return method
@@ -143,10 +227,12 @@ class Resource:
         """Set up methods and child resources"""
         # set up resource methods
         for name, mcfg in self._config.methods.items():
+            log.debug(f"Setting up method: {name}")
             if not hasattr(self, name):
                 setattr(self, name, self._createmethod(mcfg))
 
         for name, ccfg in self._config.children.items():
+            log.debug(f"Setting up child resource: {name}")
             if not hasattr(self, name):
                 ccfg.parent = self._config
                 setattr(self, name, Resource(self._session, ccfg))
@@ -162,10 +248,12 @@ class ResourceBuilder:
             path=(path or name.lower())
         )
         self._session = None
+        log.debug(f"Created ResourceBuilder for {name} with path {self._config.path}")
 
     def path(self, path: str) -> ResourceBuilder:
         """Set the resource path"""
         self._config.path = path
+        log.debug(f"Set resource path to: {path}")
         return self
 
     def addmethod(
@@ -185,8 +273,10 @@ class ResourceBuilder:
             path=path,
             payload=payload,
             preprocess=preprocess,
+            postprocess=postprocess,
             description=description
         )
+        log.debug(f"Added method {name} with path {path}")
         return self
 
     def addchild(self, name: str, child: (ResourceBuilder | ResourceConfig)) -> ResourceBuilder:
@@ -198,17 +288,21 @@ class ResourceBuilder:
 
         childcfg.parent = self._config
         self._config.children[name] = childcfg
+        log.debug(f"Added child resource: {name}")
         return self
 
     def session(self, session: Session) -> ResourceBuilder:
         """Set the session to use for this resource"""
         self._session = session
+        log.debug(f"Set session for resource")
         return self
 
     def build(self) -> Resource:
         """Build and return a Resource with the configured options"""
         if not self._session:
+            log.error("Cannot build resource: Session is required")
             raise ResourceError("Session is required to build a Resource")
+        log.debug(f"Building resource: {self._config.name}")
         return Resource(self._session, self._config)
 
 
@@ -222,6 +316,7 @@ def decoratormethod(method: RequestMethod, path: t.Optional[str] = None, **kwarg
             path=path,
             **kwargs
         )
+        log.debug(f"Created method decorator for {func.__name__} with path {path}")
         return func
     return decorator
 

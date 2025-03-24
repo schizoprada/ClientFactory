@@ -1,4 +1,26 @@
 # ~/ClientFactory/src/clientfactory/client/__init__.py
 """
-Base Client Class
+Client Module
+-------------
+This module provides the Client class and related components for building API clients with minimal boilerplate.
 """
+
+from .base import (
+    Client, ClientError
+)
+from .config import (
+    ClientConfig
+)
+from .builder import (
+    ClientBuilder
+)
+
+from loguru import logger as log
+log.remove() # remove logging during initialization
+
+__all__ = [
+    'Client',
+    'ClientError',
+    'ClientConfig',
+    'ClientBuilder'
+]

@@ -32,7 +32,7 @@ class Parameter:
 
     Parameters can have default values, type constraints, required flags, and transformation logic.
     """
-    name: str # we need to make this required if not being included in a payload, but otherwise the payload should set the name based on the variable its assigned to
+    name: t.Optional[str] = None # we need to make this required if not being included in a payload, but otherwise the payload should set the name based on the variable its assigned to
     type: ParameterType = ParameterType.ANY
     required: bool = False
     default: t.Any = None
@@ -111,8 +111,10 @@ class NestedParameter(Parameter):
 
         for name, param in self.children.items():
             if name in value:
-                param.validate(value[name])
-
+                if not param.validate(value[name]):
+                    return False
+            elif param.required:
+                raise ValidationError(f"Required nested parameter '{name}' is missing")
         return True
 
     def apply(self, value: t.Any) -> t.Dict[str, t.Any]:
@@ -139,7 +141,6 @@ class NestedParameter(Parameter):
         return result
 
 
-@dataclass
 class Payload:
     """
     Defines a complete request payload structure with parameters.
@@ -147,8 +148,44 @@ class Payload:
     A payload consists of parameters with validation and transformation rules,
     as well as static values that are always included.
     """
-    parameters: t.Dict[str, Parameter] = field(default_factory=dict)
-    static: t.Dict[str, t.Any] = field(default_factory=dict)
+    def __init__(self, **kwargs):
+        """
+        Initialize a payload with parameters.
+
+        Parameters can be passed as keyword arguments, where the key becomes
+        the parameter name if not explicitly set.
+
+        Example:
+            payload = Payload(
+                keyword=Parameter(),  # name will be set to "keyword"
+                hits=Parameter(name="count")  # name remains "count"
+            )
+        """
+        self.parameters = {}
+        self.static = {}
+
+        # Process keyword arguments as parameters
+        for name, value in kwargs.items():
+            if isinstance(value, Parameter):
+                # Set the parameter name if not explicitly provided
+                if value.name is None:
+                    value.name = name
+                self.parameters[name] = value
+            else:
+                # Treat other values as static
+                self.static[name] = value
+
+    def __getattr__(self, name: str) -> Parameter:
+        """
+        Allow accessing parameters as attributes.
+
+        Example:
+            payload = Payload(keyword=Parameter())
+            print(payload.keyword.name) # outputs: "keyword"
+        """
+        if name in self.parameters:
+            return self.parameters[name]
+        raise AttributeError(f"'Payload' object has no attribute '{name}'")
 
     def validate(self, data: t.Dict[str, t.Any]) -> bool:
         """Validate data against parameter definitions."""
@@ -157,7 +194,8 @@ class Payload:
 
         for name, param in self.parameters.items():
             if name in data:
-                param.validate(data[name])
+                if not param.validate(data[name]):
+                    raise ValidationError(f"Parameter '{name}' failed validation")
             elif (param.required) and (param.default is None):
                 raise ValidationError(f"Required parameter '{name}' is missing")
 
@@ -175,7 +213,7 @@ class Payload:
         return result
 
 
-class PayloadBuidler:
+class PayloadBuilder:
     """Builder for creating Payload instances with fluent configuration"""
 
     def __init__(self):
@@ -203,10 +241,10 @@ class PayloadBuidler:
 
     def build(self) -> Payload:
         """Build and return the payload"""
-        return Payload(
-            parameters=self.parameters,
-            static=self.static
-        )
+        payload = Payload()
+        payload.parameters = self.parameters.copy()
+        payload.static = self.static.copy()
+        return payload
 
 
 class PayloadTemplate:
@@ -222,20 +260,31 @@ class PayloadTemplate:
 
     def build(self, **overrides) -> Payload:
         """Build a Payload from the template with optional overrides."""
-        params = {}
+        payload = Payload()
+
         for name, config in self.paramdefs.items():
             if name in overrides:
-                params[name] = Parameter(name=name, **overrides.pop(name))
+                paramconfig = overrides.pop(name)
+                if isinstance(paramconfig, Parameter):
+                    if paramconfig.name is None:
+                        paramconfig.name = name
+                    payload.parameters[name] = paramconfig
+                else:
+                    payload.parameters[name] = Parameter(name=name, **paramconfig)
             else:
-                params[name] = Parameter(name=name, **config)
+                payload.parameters[name] = Parameter(name=name, **config)
 
         for name, config in overrides.items():
-            params[name] = Parameter(name=name, **config)
+            if isinstance(config, Parameter):
+                if config.name is None:
+                    config.name = name
+                payload.parameters[name] = config
+            else:
+                payload.parameters[name] = Parameter(name=name, **config)
 
-        return Payload(
-            parameters=params,
-            static=cp.deepcopy(self.staticvals)
-        )
+        payload.static = cp.deepcopy(self.staticvals)
+
+        return payload
 
     def extend(self, parameters: t.Optional[t.Dict[str, t.Dict[str, t.Any]]] = None, static: t.Optional[t.Dict[str, t.Any]] = None) -> PayloadTemplate:
         """Create a new template by extending this one."""
