@@ -97,7 +97,22 @@ class Client:
         log.debug("Discovering resources")
         for name, cls in inspect.getmembers(self.__class__, lambda x: inspect.isclass(x) and hasattr(x, '_resourceconfig')):
             log.debug(f"Found resource class: {name}")
-            self.register(cls)
+            if (resourcetype:=getattr(cls, '_resourcetype', None)):
+                log.debug(f"Using specialized resource type: {resourcetype.__name__}")
+                cls._resourceconfig.parent = self
+
+                attributes = {}
+                for attrname in dir(cls):
+                    if not attrname.startswith('_'):
+                        attrvalue = getattr(cls, attrname)
+                        if not callable(attrvalue):
+                            attributes[attrname] = attrvalue
+
+                resource = resourcetype(self._session, cls._resourceconfig, attributes=attributes)
+                self._resources[cls.__name__.lower()] = resource
+                setattr(self, cls.__name__.lower(), resource)
+            else:
+                self.register(cls)
 
 
     def register(self, resourcecls: t.Type) -> None:

@@ -17,23 +17,12 @@ def preprocess(func=None):
     A preprocessor can modify the request before it is sent to the server.
     It should accept a Request object and return a modified Request object.
     """
-    # If used without arguments @preprocess
-    if func is not None and callable(func) and not hasattr(func, '_methodconfig'):
-        @fn.wraps(func)
-        def wrapper(*args, **kwargs):
-            return func(*args, **kwargs)
-        return wrapper
-
-    # If used with arguments @preprocess(func)
-    func = func  # Store the transform function (might be None for @preprocess())
-
     def decorator(method):
         if hasattr(method, '_methodconfig'):
             method._methodconfig.preprocess = func
         else:
             method._preprocess = func
         return method
-
     return decorator
 
 
@@ -44,23 +33,12 @@ def postprocess(func=None):
     A postprocessor can transform the response after it is received from the server.
     It should accept a Response object and return a transformed value.
     """
-    # If used without arguments @postprocess
-    if func is not None and callable(func) and not hasattr(func, '_methodconfig'):
-        @fn.wraps(func)
-        def wrapper(*args, **kwargs):
-            return func(*args, **kwargs)
-        return wrapper
-
-    # If used with arguments @postprocess(func)
-    func = func  # Store the transform function (might be None for @postprocess())
-
     def decorator(method):
         if hasattr(method, '_methodconfig'):
             method._methodconfig.postprocess = func
         else:
             method._postprocess = func
         return method
-
     return decorator
 
 

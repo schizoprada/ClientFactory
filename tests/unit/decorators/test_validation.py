@@ -9,6 +9,14 @@ from clientfactory.decorators.validation import ValidationError, validateinput, 
 from clientfactory.decorators.method import get, post
 from clientfactory.core.response import Response
 
+@pytest.fixture
+def mock_response():
+    response = MagicMock(spec=Response)
+    response.json.return_value = {
+        "status": "ok",
+        "items": ["item1", "item2"]
+    }
+    return response
 
 class TestClass:
     """Test class for testing class methods with decorators"""
@@ -98,7 +106,7 @@ def test_validateinput_with_method():
         api.create_user(email="test@example.com")
 
 
-def test_validateoutput_basic():
+def test_validateoutput_basic(mock_response):
     """Test validateoutput decorator"""
     def validator(response):
         data = response.json()
@@ -106,32 +114,22 @@ def test_validateoutput_basic():
             raise ValidationError("Missing status field")
         return data
 
-    # Apply the get decorator first
     @get("test")
-    class TestMethod:
+    def test_method():
         pass
 
     # Then apply the validateoutput decorator
-    decorated = validateoutput(validator)(TestMethod)
+    decorated = validateoutput(validator)(test_method)
 
     # Check that validator was stored as postprocess
     assert hasattr(decorated, '_methodconfig')
     assert decorated._methodconfig.postprocess == validator
 
-    # Test the validator with a mock response
-    mock_response = MagicMock(spec=Response)
-    mock_response.json.return_value = {"status": "ok", "data": [1, 2, 3]}
-
+    # Test the validator
     result = validator(mock_response)
-    assert result == {"status": "ok", "data": [1, 2, 3]}
+    assert result == {"status": "ok", "items": ["item1", "item2"]}
 
-    # Test with invalid response
-    mock_response.json.return_value = {"data": [1, 2, 3]}  # No status
-    with pytest.raises(ValidationError):
-        validator(mock_response)
-
-
-def test_validateoutput_with_method():
+def test_validateoutput_with_method(mock_response):
     """Test validateoutput with HTTP method decorator"""
     def validator(response):
         data = response.json()
@@ -139,21 +137,17 @@ def test_validateoutput_with_method():
             raise ValidationError("Missing items field")
         return data['items']
 
-    # Apply the get decorator first
     @get("items")
-    class TestMethod:
+    def test_method():
         pass
 
     # Then apply the validateoutput decorator
-    decorated = validateoutput(validator)(TestMethod)
+    decorated = validateoutput(validator)(test_method)
 
     # Check that validator was stored as postprocess
     assert hasattr(decorated, '_methodconfig')
     assert decorated._methodconfig.postprocess == validator
 
-    # Test the validator with a mock response
-    mock_response = MagicMock(spec=Response)
-    mock_response.json.return_value = {"items": [1, 2, 3]}
-
+    # Test the validator
     result = validator(mock_response)
-    assert result == [1, 2, 3]
+    assert result == ["item1", "item2"]

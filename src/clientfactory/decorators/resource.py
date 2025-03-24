@@ -7,9 +7,9 @@ Provides decorators for defining API resources in a declarative style.
 import inspect, typing as t, functools as fn
 from loguru import logger as log
 
-from clientfactory.core.resource import ResourceConfig
+from clientfactory.core.resource import ResourceConfig, Resource
 
-def resource(cls=None, path: t.Optional[str] = None, name: t.Optional[str] = None):
+def resource(cls=None, path: t.Optional[str] = None, name: t.Optional[str] = None, type: t.Optional[t.Type[Resource]] = None):
     """
     Decorator to define an API resource.
 
@@ -34,6 +34,9 @@ def resource(cls=None, path: t.Optional[str] = None, name: t.Optional[str] = Non
 
             if hasattr(method, '_methodconfig'):
                 cls._resourceconfig.methods[mname] = method._methodconfig
+
+        if type is not None:
+            cls._resourcetype = type
 
         return cls
 
