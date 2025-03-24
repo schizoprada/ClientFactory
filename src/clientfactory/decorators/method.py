@@ -33,13 +33,9 @@ def methodwithpayload(httpfunc, payload: Payload, **kwargs):
     return fn.partial(httpfunc, payload=payload, **kwargs)
 
 
-get = fn.partial(httpmethod, RM.GET)
-post = fn.partial(httpmethod, RM.POST)
-put = fn.partial(httpmethod, RM.PUT)
-patch = fn.partial(httpmethod, RM.PATCH)
-delete = fn.partial(httpmethod, RM.DELETE)
-head = fn.partial(httpmethod, RM.HEAD)
-options = fn.partial(httpmethod, RM.OPTIONS)
+methodtypes = {RM.GET, RM.POST, RM.PUT, RM.PATCH, RM.DELETE, RM.HEAD, RM.OPTIONS}
+get, post, put, patch, delete, head, options = (fn.partial(httpmethod, methodtype) for methodtype in methodtypes)
+
 
 get.__doc__ = (
 """
