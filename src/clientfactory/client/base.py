@@ -17,18 +17,21 @@ from clientfactory.core import (
 )
 from clientfactory.auth import BaseAuth
 from clientfactory.client.config import ClientConfig
+from clientfactory.declarative import DeclarativeContainer
+
 
 class ClientError(Exception):
     """Base exception raised for client related errors."""
     pass
 
-class Client:
+class Client(DeclarativeContainer):
     """
     Base client class for API interaction.
 
     The Client class serves as a container for resources and manages authentication and session configuration.
     It can be used directly or via a ClientBuilder
     """
+    __declarativetype__ = 'client'
     baseurl: str = ""
 
     def __init__(self, baseurl: t.Optional[str] = None, auth: t.Optional[BaseAuth] = None, config: t.Optional[ClientConfig] = None):
@@ -114,7 +117,6 @@ class Client:
             else:
                 self.register(cls)
 
-
     def register(self, resourcecls: t.Type) -> None:
         """Manually register a resource class"""
         log.debug(f"Registering resource class: {resourcecls.__name__}")
@@ -152,3 +154,38 @@ class Client:
         """Exit context manager and close the client"""
         log.debug("Exiting client context")
         self.close()
+
+    @classmethod
+    def _processclassattributes(cls) -> None:
+        """
+        Process client-specific class attributes.
+
+        Extends the container implementation to extract client-specific configurations and discover resources.
+        """
+        super()._processclassattributes()
+
+        if ('baseurl' not in cls.__metadata__) and (hasattr(cls, 'baseurl')):
+            cls.__metadata__['baseurl'] = cls.baseurl
+            log.debug(f"DeclarativeClient: extracted baseurl ({cls.baseurl}) from: {cls.__name__}")
+
+        if 'resources' not in cls.__metadata__:
+            cls.__metadata__['resources'] = {}
+
+        for name, value in vars(cls).items():
+            if name.startswith('__') and name.endswith('__'):
+                continue
+
+            if inspect.isclass(value) and issubclass(value, Resource):
+                resourcename = value.__metadata__.get('name', name.lower())
+                cls.__metadata__['resources'][resourcename] = value
+                log.debug(f"DeclarativeClient: found resource ({resourcename}) on: {cls.__name__}")
+
+                value.setmetadata('parent', cls)
+
+    @classmethod
+    def getresources(cls) -> dict:
+        return cls.__metadata__.get('resources', {})
+
+    @classmethod
+    def getbaseurl(cls) -> str:
+        return cls.__metadata__.get('baseurl', '')

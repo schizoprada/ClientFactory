@@ -13,18 +13,8 @@ from .decorators import (
     declarative, declarativemethod, container
 )
 
-from .resource import (
-    DeclarativeResource, resource
-)
-
-from .client import (
-    DeclarativeClient, client
-)
-
 __all__ = [
     'DeclarativeMeta', 'DeclarativeComponent', 'DeclarativeContainer',
-    'DeclarativeResource', 'DeclarativeClient', 'isdeclarative',
-    'getclassmetadata', 'copymetadata', 'declarative',
-    'declarativemethod', 'container', 'resource',
-    'client'
+    'isdeclarative', 'getclassmetadata', 'copymetadata',
+    'declarative', 'declarativemethod', 'container'
 ]

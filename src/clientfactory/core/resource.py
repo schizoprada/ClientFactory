@@ -15,6 +15,8 @@ from loguru import logger as log
 from clientfactory.core.request import Request, RequestMethod
 from clientfactory.core.session import Session
 from clientfactory.core.payload import Payload
+from clientfactory.declarative import DeclarativeContainer
+
 
 class ResourceError(Exception):
     """Base exception for resource-related errors"""
@@ -42,7 +44,7 @@ class ResourceConfig:
     parent: t.Optional[t.Union['ResourceConfig', t.Any]] = None
 
 
-class Resource:
+class Resource(DeclarativeContainer):
     """
     Base resource class that handles endpoint operations.
 
@@ -54,6 +56,10 @@ class Resource:
     Resources can be used directly or as base classes for more specific
     API resources. They support nesting to represent API hierarchies.
     """
+
+    __declarativetype__ = 'resource'
+    path: str = ""
+    name: t.Optional[str] = None
 
     def  __init__(self, session: Session, config: ResourceConfig):
         self._session = session
@@ -236,6 +242,69 @@ class Resource:
             if not hasattr(self, name):
                 ccfg.parent = self._config
                 setattr(self, name, Resource(self._session, ccfg))
+
+    @classmethod
+    def _processclassattributes(cls) -> None:
+        """Process resource-specific class attributes."""
+        log.debug(f"DeclarativeResource: starting attribute processing for ({cls.__name__})")
+        log.debug(f"DeclarativeResource: current metadata before processing: {cls.__metadata__}")
+
+        # Set name FIRST, before any inheritance
+        if ('name' not in cls.__metadata__):
+            cls.__metadata__['name'] = cls.__name__.lower()
+            log.debug(f"DeclarativeResource: set name to ({cls.__metadata__['name']}) for: {cls.__name__}")
+        else:
+            log.debug(f"DeclarativeResource: name already set to ({cls.__metadata__['name']}) for: {cls.__name__}")
+
+        # Then do normal processing
+        log.debug(f"DeclarativeResource: calling super()._processclassattributes for: {cls.__name__}")
+        super()._processclassattributes()
+        log.debug(f"DeclarativeResource: returned from super()._processclassattributes for: {cls.__name__}")
+        log.debug(f"DeclarativeResource: metadata after super(): {cls.__metadata__}")
+
+        # Process path after other attributes
+        if ('path' not in cls.__metadata__) and (hasattr(cls, 'path')):
+            cls.__metadata__['path'] = cls.path.lstrip('/').rstrip('/')
+            log.debug(f"DeclarativeResource: extracted path ({cls.path}) from: {cls.__name__}")
+
+        log.debug(f"DeclarativeResource: completed processing for ({cls.__name__}) - final metadata: {cls.__metadata__}")
+
+
+    @classmethod
+    def getfullpath(cls) -> str:
+        """
+        Get the full path of the resource including parent paths.
+
+        Traverses the parent to chain to build the complete resource path.
+        """
+        pathparts = []
+        current = cls
+        seen = set()
+
+        while current and id(current) not in seen:
+            seen.add(id(current))
+            if hasattr(current, '__metadata__') and ('path' in current.__metadata__):
+                if (mpath:=current.__metadata__.get('path', '')):
+                    pathparts.append(mpath.lstrip('/').rstrip('/'))
+                current = current.__metadata__.get('parent')
+            else:
+                break
+
+
+        pathparts.reverse()
+
+        return '/' + '/'.join(pathparts)
+
+
+    @classmethod
+    def getmethods(cls) -> dict:
+        """Get all declarative methods defined on this resource."""
+        return cls.__metadata__.get('methods', {})
+
+    @classmethod
+    def getnestedresources(cls) -> dict:
+        """Get all nested resources defined on this resource."""
+        return cls.__metadata__.get('components', {})
 
 
 class ResourceBuilder:

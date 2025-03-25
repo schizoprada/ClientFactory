@@ -8,8 +8,15 @@ import inspect, typing as t, functools as fn
 from loguru import logger as log
 
 from clientfactory.core.resource import ResourceConfig, Resource
+from clientfactory.declarative import DeclarativeContainer
 
-def resource(cls=None, path: t.Optional[str] = None, name: t.Optional[str] = None, type: t.Optional[t.Type[Resource]] = None):
+def resource(
+    cls=None,
+    *,
+    path: t.Optional[str] = None,
+    name: t.Optional[str] = None,
+    variant: t.Optional[t.Type[Resource]] = None # changed to not conflict with `type` keyword
+):
     """
     Decorator to define an API resource.
 
@@ -17,37 +24,58 @@ def resource(cls=None, path: t.Optional[str] = None, name: t.Optional[str] = Non
     The decorated class will be registered with the client when included
     as a nested class or explicitly registered.
     """
-    def wrap(cls):
-        if not hasattr(cls, '_resourceconfig'):
-            resourcepath = (path or getattr(cls, 'path', cls.__name__.lower()))
-            resourcename = (name or cls.__name__)
-            log.debug(f"Creating ResourceConfig for {cls.__name__} with path: {resourcepath}")
-            cls._resourceconfig = ResourceConfig(
-                name=resourcename,
-                path=resourcepath,
-                methods={},
-                children={}
-            )
-        for mname, method in cls.__dict__.items():
-            if mname.startswith('__') or not callable(method):
+    metadata = {}
+    attributes = {
+        'path': path,
+        'name': name
+    }
+
+    for k, v in attributes.items():
+        if v is not None:
+            metadata[k] = v
+
+    def decorator(cls):
+        if isinstance(cls, type) and issubclass(cls, Resource):
+            for k, v in metadata.items():
+                cls.setmetadata(k, v)
+                if k == 'path':
+                    cls.path = v.lstrip('/').rstrip('/')
+            return cls
+
+        if issubclass(cls, DeclarativeContainer):
+            bases = tuple(b if b!=DeclarativeContainer else Resource for b in cls.__bases__)
+        else:
+            bases = (Resource,) + cls.__bases__
+
+        newcls = type(cls.__name__, bases, dict(cls.__dict__))
+
+        for k, v in metadata.items():
+            newcls.setmetadata(k, v)
+            if v is not None:
+                setattr(newcls, k, v)
+
+        resourcepath = (path or getattr(newcls, 'path', newcls.__name__.lower()))
+        resourcename = (name or newcls.__name__)
+
+        newcls._resourceconfig = ResourceConfig(
+            name=resourcename,
+            path=resourcepath.lstrip('/').rstrip('/'),
+            methods={},
+            children={}
+        )
+
+        for mname, method in newcls.__dict__.items():
+            if (mname.startswith('__')) or (not callable(method)):
                 continue
-
             if hasattr(method, '_methodconfig'):
-                cls._resourceconfig.methods[mname] = method._methodconfig
+                newcls._resourceconfig.methods[mname] = method._methodconfig
 
-        if type is not None:
-            cls._resourcetype = type
+        if variant is not None:
+            newcls._resourcetype = variant
 
-        return cls
+        log.debug(f"resource: created resource ({newcls.__name__}) with path: {resourcepath}")
+        return newcls
 
     if cls is None:
-        return wrap
-    return wrap(cls)
-
-def subresource(cls=None, path: t.Optional[str] = None, name: t.Optional[str] = None):
-    """
-    Decorator to define a nested resource.
-
-    Similar to @resource but intended for nested resources.
-    """
-    return resource(cls, path=path, name=name)
+        return decorator
+    return decorator(cls)
