@@ -19,6 +19,10 @@ from .oauth import (
     OAuthConfig, OAuthAuth
 )
 
+from .dpop import (
+    DpopAuth, DpopError
+)
+
 from loguru import logger as log
 log.remove() # remove logging during initialization
 
@@ -28,5 +32,5 @@ __all__ = [
     'TokenScheme', 'TokenAuth', 'KeyLocation',
     'APIKeyError', 'APIKeyAuth', 'OAuthError',
     'OAuthToken', 'OAuthFlow', 'OAuthConfig',
-    'OAuthAuth'
+    'OAuthAuth', 'DpopAuth', 'DpopError'
 ]

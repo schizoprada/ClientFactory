@@ -9,9 +9,9 @@ import typing as t
 from dataclasses import dataclass, field
 from datetime import datetime
 
-from clientfactory.core import (
-    Request
-)
+from clientfactory.core import Request
+from clientfactory.declarative import DeclarativeComponent
+
 
 class AuthError(Exception):
     """Raised for authentication related exceptions"""
@@ -32,7 +32,7 @@ class AuthState:
             return False
         return (datetime.now() > self.expires)
 
-class BaseAuth: # consider usage of ABC
+class BaseAuth(DeclarativeComponent):
     """
     Base class for authentication providers.
 
@@ -43,9 +43,33 @@ class BaseAuth: # consider usage of ABC
     the `_authenticate` and `_prepare` methods
     """
 
-    def __init__(self):
+    __declarativetype__ = 'auth'
+
+    def __init__(self, **kwargs):
         """Initialize auth provider with default state"""
         self.state = AuthState()
+
+        # initialize from metadata
+        for k, v in self.getallmetadata().items():
+            if (not k.startswith('_')) and (hasattr(self, k)):
+                setattr(self, k, v)
+
+        for k, v in kwargs.items():
+            if hasattr(self, k):
+                setattr(self, k, v)
+
+    @classmethod
+    def _processclassattributes(cls) -> None:
+        """Process auth-specific class attributes into metadata"""
+        super()._processclassattributes()
+        for name, value in vars(cls).items():
+            if (
+                not name.startswith('_')
+                and not callable(value)
+                and not isinstance(value, type)
+                and not isinstance(value, property)
+            ):
+                cls.__metadata__[name] = value
 
     def _authenticate(self) -> bool:
         """

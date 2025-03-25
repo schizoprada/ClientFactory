@@ -50,6 +50,9 @@ class ManagedResource(SpecializedResource):
     resources with standard naming and behavior.
     """
 
+    __declarativetype__ = 'managed'
+    operations: t.Dict[str, Operation] = {}
+
     def __init__(self, session: Session, config: ManagedResourceConfig):
         super().__init__(session, config)
         self._operations = (config.operations or {})
@@ -72,7 +75,8 @@ class ManagedResource(SpecializedResource):
 
     def _setupspecialized(self):
         """Set up CRUD operations."""
-        for name, operation in self._operations.items():
+        operations = self.getmetadata('operations', {})
+        for name, operation in operations.items():
             if not hasattr(self, name):
                 log.debug(f"Registering operation: {name}")
 

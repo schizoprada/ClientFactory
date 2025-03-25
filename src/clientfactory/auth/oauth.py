@@ -64,9 +64,39 @@ class OAuthAuth(BaseAuth):
         - Refresh Token
     """
 
-    def __init__(self, config: OAuthConfig, token: t.Optional[OAuthToken] = None):
+    __declarativetype__ = 'oauth'
+
+    clientid: str = ""
+    clientsecret: str = ""
+    tokenurl: str = ""
+    authurl: t.Optional[str] = None
+    redirecturi: t.Optional[str] = None
+    scope: t.Optional[str] = None
+    tokenfield: str = "access_token"
+    flow: OAuthFlow = OAuthFlow.AUTHORIZATIONCODE
+    extraparams: dict = {}
+    headers: dict = {}
+
+    def __init__(self, config: t.Optional[OAuthConfig] = None, token: t.Optional[OAuthToken] = None, **kwargs):
         """Initialize with OAuth 2.0 configuration"""
-        super().__init__()
+        super().__init__(**kwargs)
+        for k, v in kwargs.items():
+            if hasattr(self, k):
+                setattr(self, k, v)
+
+        if config is None:
+            config = OAuthConfig(
+                clientid=self.clientid,
+                clientsecret=self.clientsecret,
+                tokenurl=self.tokenurl,
+                authurl=self.authurl,
+                redirecturi=self.redirecturi,
+                scope=self.scope,
+                tokenfield=self.tokenfield,
+                flow=self.flow,
+                extraparams=self.extraparams,
+                headers=self.headers
+            )
         self.config = config
         self._token = token
 
@@ -75,7 +105,6 @@ class OAuthAuth(BaseAuth):
             self.state.authenticated = True
             if token.expiresin:
                 self.state.expires = (token.created + timedelta(seconds=token.expiresin))
-
 
     def _authenticate(self) -> bool:
         """Authenticate using client credentials flow."""

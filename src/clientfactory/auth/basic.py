@@ -16,12 +16,16 @@ class BasicAuth(BaseAuth):
 
     Adds an Authorization header with the username and password encoded in the Basic authentication scheme.
     """
+    __declarativetype__ = 'basicauth'
+    username: str = ""
+    password: str = ""
 
-    def __init__(self, username: str, password: str):
-        """Initialize with username and password"""
-        super().__init__()
-        self.username = username
-        self.password = password
+    def __init__(self, username: t.Optional[str] = None, password: t.Optional[str] = None, **kwargs):
+        super().__init__(**kwargs)
+        if username is not None:
+            self.username = username
+        if password is not None:
+            self.password = password
 
     def _authenticate(self) -> bool:
         """

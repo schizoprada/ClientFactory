@@ -5,7 +5,6 @@ Token Authentication Module
 Implements token-based authentication (including Bearer tokens).
 """
 from __future__ import annotations
-from re import L
 import enum, typing as t
 from datetime import datetime, timedelta
 
@@ -32,23 +31,35 @@ class TokenAuth(BaseAuth):
     Supports various token schemes inclusing Bearer tokens.
     Adds the token to the Authorization header.
     """
+    __declarativetype__ = 'token'
+    token: str = ""
+    headerkey: str = "Authorization"
+    scheme: TokenScheme = TokenScheme.BEARER
+    expiresin: t.Optional[int] = None
 
     def __init__(
         self,
-        token: str,
-        scheme: (str | TokenScheme) = TokenScheme.BEARER,  # consider mapping to an Enum
-        expiresin: t.Optional[int] = None
+        token: t.Optional[str] = None,
+        headerkey: t.Optional[str] = None,
+        scheme: (str | TokenScheme) = TokenScheme.BEARER,
+        expiresin: t.Optional[int] = None,
+        **kwargs
     ):
-        """Initialize with token."""
-        super().__init__()
-        self.token = token
-        self.scheme = self._setscheme(scheme)
-
-        self.state.token = token
-        self.state.authenticated = bool(token)
-
+        super().__init__(**kwargs)
+        if token is not None:
+            self.token = token
+        if headerkey is not None:
+            self.headerkey = headerkey
+        if scheme is not None:
+            self.scheme = self._setscheme(scheme)
         if expiresin is not None:
-            self.state.expires = (datetime.now() + timedelta(seconds=expiresin))
+            self.expiresin = expiresin
+
+        self.state.token = self.token
+        self.state.authenticated = bool(self.token)
+
+        if self.expiresin is not None:
+            self.state.expires = (datetime.now() + timedelta(seconds=self.expiresin))
 
 
     def _setscheme(self, scheme:  (str | TokenScheme)) -> TokenScheme:
@@ -79,9 +90,9 @@ class TokenAuth(BaseAuth):
         headers = dict(request.headers or  {})
 
         if self.scheme:
-            headers['Authorization'] = f"{self.scheme.value} {self.token}"
+            headers[self.headerkey] = f"{self.scheme.value} {self.token}"
         else:
-            headers['Authorization'] = self.token
+            headers[self.headerkey] = self.token
 
         return request.clone(headers=headers)
 
@@ -103,14 +114,14 @@ class TokenAuth(BaseAuth):
         """
         Create a Bearer token authentication provider.
         """
-        return cls(token, TokenScheme.BEARER, expiresin)
+        return cls(token, TokenScheme.BEARER, expiresin=expiresin)
 
     @classmethod
     def Token(cls, token: str, expiresin: t.Optional[int] = None) -> TokenAuth:
         """
         Create a Token token authentication provider.
         """
-        return cls(token, TokenScheme.TOKEN, expiresin)
+        return cls(token, TokenScheme.TOKEN, expiresin=expiresin)
 
     @classmethod
     def JWT(cls, token: str, expiresin: t.Optional[int] = None) -> TokenAuth:

@@ -21,8 +21,7 @@ class SearchResourceConfig(ResourceConfig):
     """Configuration for search resources"""
     payload: t.Optional[Payload] = None
     requestmethod: RequestMethod = RM.GET
-    # none of the specific param or defaults, these can all be managed by Payload
-    # we dont want redundancy or excess
+
 
 class SearchResource(SpecializedResource):
     """
@@ -33,8 +32,12 @@ class SearchResource(SpecializedResource):
         - Pagination handling through iterator methods
         - Result transformation and mapping
     """
-    def __init__(self, session: Session, config: SearchResourceConfig):
-        super().__init__(session, config)
+    __declarativetype__ = 'search'
+    requestmethod: RequestMethod = RM.GET
+    payload: t.Optional[Payload] = None
+
+    def __init__(self, session: Session, config: SearchResourceConfig, **kwargs):
+        super().__init__(session, config, **kwargs)
         self._searchconfig = config
 
 
@@ -60,9 +63,9 @@ class SearchResource(SpecializedResource):
             log.debug(f"Adding default search method")
             methodconfig = MethodConfig(
                 name="search",
-                method=self._searchconfig.requestmethod,
-                path=self._searchconfig.path,
-                payload=self._searchconfig.payload
+                method=self.getmetadata('requestmethod', RM.GET),
+                path=self._config.path,
+                payload=self.getmetadata('payload')
             )
             self._config.methods["search"] = methodconfig
             setattr(self, "search", self._createmethod(methodconfig))

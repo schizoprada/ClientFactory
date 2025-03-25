@@ -3,7 +3,7 @@
 Decorator Methods
 """
 from .resource import (
-    resource, subresource
+    resource, searchresource, managedresource
 )
 
 from .method import (
@@ -21,10 +21,18 @@ from .validation import (
     validateinput, validateoutput
 )
 
+from .auth import (
+    authprovider, auth
+)
+
+from .client import clientclass
+
 __all__ = [
     'httpmethod', 'methodwithpayload', 'get',
     'post', 'put', 'patch',
     'delete', 'head', 'options',
     'preprocess', 'postprocess', 'transformrequest',
-    'transformresponse', 'validateinput', 'validateoutput'
+    'transformresponse', 'validateinput', 'validateoutput',
+    'resource', 'searchresource', 'managedresource',
+    'authprovider', 'auth'
 ]

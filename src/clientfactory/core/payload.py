@@ -301,3 +301,54 @@ class PayloadTemplate:
             parameters=newparams,
             static=newstatic
         )
+
+
+class NestedPayload(Payload):
+    """
+    Payload that handles nested parameter structures.
+
+    Can be initialized with either:
+    - A dictionary of Parameters
+    - One or more Payload objects
+    """
+    def __init__(
+        self,
+        root: str,
+        params: t.Optional[dict[str, Parameter]] = None,
+        payload: t.Optional[Payload] = None,
+        payloads: t.Optional[t.Sequence[Payload]] = None,
+        static: t.Optional[dict] = None
+    ):
+        """
+        Initialize nested payload.
+
+        Args:
+            root: Key for nested parameters
+            params: Parameter definitions (optional)
+            payload: Single Payload object (optional)
+            payloads: Multiple Payload objects (optional)
+            static: Static values to include at root level
+        """
+        self.root = root
+        self.static = (static or {})
+
+        # Handle different input types
+        if params is not None:
+            super().__init__(**params)
+        elif payload is not None:
+            self.parameters = payload.parameters.copy()
+        elif payloads is not None:
+            # Merge multiple payloads
+            merged = {}
+            for p in payloads:
+                merged.update(p.parameters)
+            self.parameters = merged
+        else:
+            self.parameters = {}
+
+    def apply(self, data: t.Dict[str, t.Any]) -> t.Dict[str, t.Any]:
+        """Apply validation and transformation with nesting"""
+        processed = super().apply(data)
+        result = self.static.copy()
+        result[self.root] = processed
+        return result

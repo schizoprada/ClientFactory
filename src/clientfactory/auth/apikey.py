@@ -26,14 +26,42 @@ class APIKeyAuth(BaseAuth):
 
     Supports adding API keys in headers, query parameters, or cookies.
     """
+    __declarativetype__ = 'apikey'
+    key: str = ""
+    name: str = "X-API-Key"
+    location: KeyLocation = KeyLocation.HEADER
+    prefix: t.Optional[str] = None
 
-    def __init__(self, key: str, name: str = "X-API-Key", location: (str | KeyLocation) = KeyLocation.HEADER, prefix: t.Optional[str] = None):
-        """Initialize with API key."""
-        super().__init__()
-        self.key = key
-        self.name = name
-        self.location = self._getlocation(location)
-        self.prefix = prefix
+    def __init__(
+        self,
+        key: t.Optional[str] = None,
+        name: t.Optional[str] = None,  # Changed from default value to Optional
+        location: t.Optional[str | KeyLocation] = None,  # Changed from default value to Optional
+        prefix: t.Optional[str] = None,
+        **kwargs
+    ):
+        """Initialize APIKeyAuth.
+
+        Order of precedence:
+        1. Constructor arguments (explicit overrides)
+        2. Declarative values (from metadata)
+        3. Default values
+        """
+        super().__init__(**kwargs)  # This sets values from metadata
+
+        # Now override with any explicitly provided values
+        if key is not None:
+            self.key = key
+        if name is not None:
+            self.name = name
+        if location is not None:
+            self.location = self._getlocation(location)
+        if prefix is not None:
+            self.prefix = prefix
+
+        # Ensure location is properly converted
+        if isinstance(self.location, str):
+            self.location = self._getlocation(self.location)
 
     def _getlocation(self, location: (str | KeyLocation)) -> KeyLocation:
         if isinstance(location, KeyLocation):
@@ -47,6 +75,7 @@ class APIKeyAuth(BaseAuth):
                     f"Invalid API Key Location '{location}'. Must be one of:"
                     f"{', '.join(e.value for e in KeyLocation)}"
                 )
+        raise APIKeyError(f"Expected API Key of type (str | KeyLocation) - got: {type(location)}")
 
     def _authenticate(self) -> bool:
         """

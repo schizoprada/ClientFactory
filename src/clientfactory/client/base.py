@@ -33,6 +33,8 @@ class Client(DeclarativeContainer):
     """
     __declarativetype__ = 'client'
     baseurl: str = ""
+    auth: t.Optional[BaseAuth] = None
+    config: t.Optional[ClientConfig] = None
 
     def __init__(self, baseurl: t.Optional[str] = None, auth: t.Optional[BaseAuth] = None, config: t.Optional[ClientConfig] = None):
         """Initialize a new client instance"""

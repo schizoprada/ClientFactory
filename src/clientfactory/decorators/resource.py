@@ -35,7 +35,8 @@ def resource(
             metadata[k] = v
 
     def decorator(cls):
-        if isinstance(cls, type) and issubclass(cls, Resource):
+        classtype = (variant or Resource)
+        if isinstance(cls, type) and issubclass(cls, classtype):
             for k, v in metadata.items():
                 cls.setmetadata(k, v)
                 if k == 'path':
@@ -43,9 +44,9 @@ def resource(
             return cls
 
         if issubclass(cls, DeclarativeContainer):
-            bases = tuple(b if b!=DeclarativeContainer else Resource for b in cls.__bases__)
+            bases = tuple(b if b!=DeclarativeContainer else classtype for b in cls.__bases__)
         else:
-            bases = (Resource,) + cls.__bases__
+            bases = (classtype,) + cls.__bases__
 
         newcls = type(cls.__name__, bases, dict(cls.__dict__))
 
@@ -79,3 +80,17 @@ def resource(
     if cls is None:
         return decorator
     return decorator(cls)
+
+
+def searchresource(cls=None, **kwargs):
+    """Decorator for search resources"""
+    from clientfactory.resources.search import SearchResource
+    if cls is None:
+        return lambda c: resource(c, variant=SearchResource, **kwargs)
+    return resource(cls, variant=SearchResource, **kwargs)
+
+def managedresource(cls=None, **kwargs):
+    from clientfactory.resources.managed import ManagedResource
+    if cls is None:
+        return lambda c: resource(c, variant=ManagedResource, **kwargs)
+    return resource(cls, variant=ManagedResource, **kwargs)
