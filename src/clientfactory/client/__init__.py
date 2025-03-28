@@ -15,8 +15,8 @@ from .builder import (
     ClientBuilder
 )
 
-from loguru import logger as log
-log.remove() # remove logging during initialization
+from clientfactory.log import log
+#log.remove() # remove logging during initialization
 
 __all__ = [
     'Client',

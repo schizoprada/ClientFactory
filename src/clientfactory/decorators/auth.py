@@ -6,12 +6,13 @@ Provides decorators for defining auth providers in a declarative style.
 """
 from __future__ import annotations
 import typing as t, functools as fn
-from loguru import logger as log
+from clientfactory.log import log
 
 from clientfactory.declarative import DeclarativeContainer
 from clientfactory.auth import (
-    BaseAuth, BasicAuth, APIKeyAuth,
-    TokenAuth, OAuthAuth, AuthError
+    AuthError, BaseAuth, BasicAuth,
+    APIKeyAuth, TokenAuth, OAuthAuth,
+    DpopAuth
 )
 
 authoptions = (BaseAuth, BasicAuth, APIKeyAuth, OAuthAuth, TokenAuth)
@@ -81,3 +82,4 @@ class auth:
     apikey = staticmethod(fn.partial(specificprovider, authtype=APIKeyAuth))
     token = staticmethod(fn.partial(specificprovider, authtype=TokenAuth))
     oauth = staticmethod(fn.partial(specificprovider, authtype=OAuthAuth))
+    dpop = staticmethod(fn.partial(specificprovider, authtype=DpopAuth))

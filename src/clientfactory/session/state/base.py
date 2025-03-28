@@ -6,7 +6,7 @@ Defines the interface for session state storage implementations.
 """
 from __future__ import annotations
 import abc, typing as t
-from loguru import logger as log
+from clientfactory.log import log
 
 from clientfactory.declarative import DeclarativeComponent
 

@@ -5,7 +5,7 @@ Method Decorators
 Provides decorators for definign API methods in a declarative style.
 """
 import typing as t, functools as fn
-from loguru import logger as log
+from clientfactory.log import log
 
 from clientfactory.core.resource import MethodConfig
 from clientfactory.core.request import RequestMethod, RM

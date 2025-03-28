@@ -10,7 +10,7 @@ import typing as t, requests as rq
 from dataclasses import dataclass, field
 from contextlib import AbstractContextManager
 import urllib.parse
-from loguru import logger as log
+from clientfactory.log import log
 
 from clientfactory.core.request import Request, RequestConfig
 from clientfactory.core.response import Response
@@ -51,8 +51,10 @@ class Session(AbstractContextManager):
     def __init__(self, config: t.Optional[SessionConfig] = None, auth: t.Optional["BaseAuth"] = None):
         """Initialize session with optional configuration and authentication."""
         log.debug("Initializing Session")
+        log.info(f"DEBUGGING SESSION INIT - Received auth: {auth}")
         self.config = (config or SessionConfig())
         self.auth = auth
+        log.info(f"DEBUGGING SESSION INIT - Set self.auth: {self.auth}")
         self._session = self._createsession()
         self._requesthooks = []
         self._responsehooks = []
@@ -99,19 +101,44 @@ class Session(AbstractContextManager):
 
     def preparerequest(self, request: Request) -> rq.Request:
         """Prepare a Request for execution with requests libary"""
+        log.info(f"DEBUGGING - Preparing request: {request}")
+        log.info(f"DEBUGGING - Session headers before hooks: {self._session.headers}")
+        log.info(f"DEBUGGING - Request headers before preparation: {request.headers}")
+
         log.debug(f"Preparing request: {request}")
+
+
+        # apply session headers to request if not already set
+        if self._session.headers:
+            newheaders = dict(self._session.headers)
+            if request.headers:
+                newheaders.update(request.headers)
+            request = request.clone(headers=newheaders)
+            log.info(f"DEBUGGING - Applied session headers to request: {request.headers}")
+
 
         # apply request hooks
         for i, hook in enumerate(self._requesthooks):
+            log.debug(f"DEBUGGING - Applying request hook {i+1}")
             log.debug(f"Applying request hook {i+1}/{len(self._requesthooks)}")
             request = hook(request)
             log.debug(f"Request after hook {i+1}: {request}")
 
         # apply authentication if available
         if self.auth:
+            log.debug(f"DEBUGGING - Applying auth: {self.auth.__class__.__name__}")
             log.debug("Applying authentication to request")
+
+            # ensure auth is authenticated
+            if not self.auth.state.authenticated:
+                log.info(f"Session: auth not authenticated, authenticating now")
+                self.auth.authenticate()
+
             request = self.auth.prepare(request)
             log.debug(f"Request after auth: {request}")
+            log.debug(f"DEBUGGING - Headers after auth: {request.headers}")
+        else:
+            log.debug(f"DEBUGGING - No auth available")
 
         prepared = request.prepare()
         log.debug(f"Request after preparation: {prepared}")
@@ -137,10 +164,14 @@ class Session(AbstractContextManager):
 
     def send(self, request: Request) -> Response:
         """Send a request and return a response"""
-        log.debug(f"Sending request: {request}")
+        log.info(f"DEBUGGING REQUEST SEND - Request: {request}")
+        log.info(f"DEBUGGING REQUEST SEND - Self.auth: {self.auth}")
 
         try:
             log.debug("Preparing request for sending")
+            log.info(f"DEBUGGING - Session object: {self._session}")
+            log.info(f"DEBUGGING - Session headers: {self._session.headers}")
+            log.info(f"DEBUGGING - Session auth: {self.auth}")
             req = self.preparerequest(request)
             prepared = self._session.prepare_request(req)
             log.debug(f"Final prepared request: {prepared.url} {prepared.method}")

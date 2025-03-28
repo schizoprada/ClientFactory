@@ -6,7 +6,7 @@ Provides decorators for defining API clients in a declarative style.
 """
 from __future__ import annotations
 import typing as t
-from loguru import logger as log
+from clientfactory.log import log
 
 from clientfactory.client.base import Client
 from clientfactory.declarative import DeclarativeContainer

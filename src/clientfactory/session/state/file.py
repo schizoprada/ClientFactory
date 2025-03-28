@@ -7,7 +7,7 @@ Implements file-based state storage with different serialization options.
 from __future__ import annotations
 import abc, json, pickle, typing as t
 from pathlib import Path
-from loguru import logger as log
+from clientfactory.log import log
 
 from clientfactory.session.state.base import StateStore, StateError
 

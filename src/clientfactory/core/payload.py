@@ -181,7 +181,7 @@ class Payload:
 
         Example:
             payload = Payload(keyword=Parameter())
-            print(payload.keyword.name) # outputs: "keyword"
+            log.debug(payload.keyword.name) # outputs: "keyword"
         """
         if name in self.parameters:
             return self.parameters[name]

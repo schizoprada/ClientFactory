@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 from clientfactory.auth.oauth import OAuthAuth, OAuthConfig, OAuthToken, OAuthFlow, OAuthError
-from clientfactory.auth.token import TokenScheme
+from clientfactory.auth.tokens import TokenScheme
 from clientfactory.core import Request, RequestMethod
 
 

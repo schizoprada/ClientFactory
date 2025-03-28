@@ -4,7 +4,7 @@ Transform Decorators
 Provides decorators for transforming requests and responses.
 """
 import typing as t, functools as fn
-from loguru import logger as log
+from clientfactory.log import log
 
 from clientfactory.core.request import Request
 from clientfactory.core.response import Response

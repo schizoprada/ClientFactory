@@ -7,7 +7,7 @@ Resource implementation for CRUD operations with standardized methods.
 from __future__ import annotations
 import enum, typing as t
 from dataclasses import dataclass, field
-from loguru import logger as log
+from clientfactory.log import log
 
 from clientfactory.core.resource import ResourceConfig, MethodConfig
 from clientfactory.core.request import RequestMethod, RM, Request

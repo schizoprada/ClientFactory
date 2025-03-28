@@ -7,7 +7,7 @@ import requests
 from loguru import logger as log
 
 # Configure logging for tests
-log.remove()  # Remove default handler
+#log.remove()  # Remove default handler
 log.configure(handlers=[{"sink": sys.stdout, "level": "DEBUG"}])
 
 from clientfactory.client import Client, ClientBuilder

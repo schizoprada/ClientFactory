@@ -9,7 +9,7 @@ It manages resources, authentication, and session handling.
 from __future__ import annotations
 import inspect, typing as t
 from dataclasses import dataclass, field
-from loguru import logger as log
+from clientfactory.log import log
 
 from clientfactory.core import (
     Session, SessionConfig, SessionBuilder,
@@ -38,9 +38,30 @@ class Client(DeclarativeContainer):
 
     def __init__(self, baseurl: t.Optional[str] = None, auth: t.Optional[BaseAuth] = None, config: t.Optional[ClientConfig] = None):
         """Initialize a new client instance"""
-        log.debug(f"Initializing client with baseurl: {baseurl}")
+        from clientfactory.utils.internal import attributes
 
-        self._auth = auth
+        log.debug(f"Initializing client with baseurl: {baseurl}")
+        sources = [self, self.__class__]
+
+        # Strategic logs for auth resolution
+        log.info(f"DEBUGGING CLIENT INIT - Sources for auth resolution: {sources}")
+        log.info(f"DEBUGGING CLIENT INIT - Class variables: {[k for k in dir(self.__class__) if not k.startswith('_')]}")
+        log.info(f"DEBUGGING CLIENT INIT - Class auth attr: {getattr(self.__class__, 'auth', None)}")
+        log.info(f"DEBUGGING CLIENT INIT - Class metadata: {getattr(self.__class__, '__metadata__', {}).get('auth', None)}")
+        log.info(f"DEBUGGING CLIENT INIT - Class components: {getattr(self.__class__, '__metadata__', {}).get('components', {}).get('auth', None)}")
+
+        authattr = auth or attributes.resolve('auth', sources)
+        log.info(f"DEBUGGING CLIENT INIT - AUTH ATTR: {authattr}")
+        if (authattr is not None) and inspect.isclass(authattr):
+            log.info(f"DEBUGGING CLIENT INIT - AUTH IS A CLASS - INSTANTIATING: {authattr.__class__.__name__}")
+            self._auth = authattr()
+            log.info(f"DEBUGGING CLIENT INIT - AUTH INSTANTIATED AND SET: {self._auth.__class__.__name__}")
+        else:
+            log.info(f"DEBUGGING CLIENT INIT - AUTH IS EITHER NONE OR INSTANTIATED - SETTING")
+            self._auth = authattr
+
+
+
         self._config = (config or ClientConfig(baseurl=(baseurl or self.baseurl)))
         log.debug(f"Initial config baseurl: {self._config.baseurl}")
 
@@ -59,13 +80,42 @@ class Client(DeclarativeContainer):
         log.debug(f"Final baseurl: {self.baseurl}")
         log.debug(f"Final config.baseurl: {self._config.baseurl}")
 
-        self._session = self._createsession()
+        instancesession = attributes.resolve('session', sources)
+        if instancesession is not None:
+            if inspect.isclass(instancesession):
+                self._session = instancesession(auth=self._auth)
+                log.info(f"DEBUGGING CLIENT INIT - CREATED SESSION FROM CLASS ATTRIBUTE WITH AUTH: {self._auth}")
+                log.info(f"DEBUGGING CLIENT INIT - SESSION AUTH CHECK: {self._session.auth}")
+            else:
+                self._session = instancesession
+                if hasattr(self._session, 'auth') and self._auth is not None:
+                    self._session.auth = self._auth
+                    log.debug(f"APPLIED AUTH TO EXISTING SESSION")
+        else:
+            self._session = self._createsession()
+            log.debug("CREATED DEFAULT SESSION")
         self._resources: dict[str, Resource] = {}
         self._discoverresources()
 
     def _createsession(self) -> Session:
         """Create a new session"""
         log.debug("Creating session")
+        if (customsession:=getattr(self, 'session', None)) is not None:
+            log.info(f"DEBUGGING SESSION CREATION - Using custom session: {customsession}")
+            log.info(f"DEBUGGING SESSION CREATION - Auth to pass: {self._auth}")
+            if isinstance(customsession, type):
+                log.info(f"DEBUGGING SESSION CREATION - Session is a class")
+                log.info(f"DEBUGGING SESSION CREATION - Session class attrs: {[k for k in dir(customsession) if not k.startswith('_')]}")
+
+                instance = customsession()
+
+                log.info(f"DEBUGGING SESSION CREATION - Instantiated session: {instance}")
+                log.info(f"DEBUGGING SESSION CREATION - Session auth after init: {getattr(instance, 'auth', None)}")
+                log.info(f"DEBUGGING SESSION CREATION - Session headers: {instance._session.headers if hasattr(instance, '_session') else 'No _session attribute'}")
+
+                return instance
+            log.info(f"DEBUGGING SESSION CREATION - Using existing session instance")
+            return customsession
         cfg = SessionConfig(
             headers=self._config.headers,
             cookies=self._config.cookies,

@@ -6,7 +6,7 @@ Decorators for defining session management components in a declarative way.
 """
 from __future__ import annotations
 import typing as t
-from loguru import logger as log
+from clientfactory.log import log
 
 from clientfactory.session.state.base import StateStore
 from clientfactory.session.state.file import FileStateStore, JSONStateStore, PickleStateStore
@@ -215,6 +215,7 @@ def enhancedsession(cls=None, *, statemanager: t.Optional[StateManager] = None, 
     if headers is not None:
         metadata['headers'] = headers
 
+    log.info(f"enhancedsession: metadata before decorator call: {metadata}")
     def decorator(cls):
         # Create new class with EnhancedSession as base
         newcls = type(cls.__name__, (EnhancedSession,), dict(cls.__dict__))

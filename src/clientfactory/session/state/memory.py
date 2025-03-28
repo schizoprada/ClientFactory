@@ -6,7 +6,7 @@ Implements in-memory state storage for temporary or testing use.
 """
 from __future__ import annotations
 import typing as t
-from loguru import logger as log
+from clientfactory.log import log
 
 from clientfactory.session.state.base import StateStore, StateError
 

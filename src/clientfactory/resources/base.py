@@ -6,7 +6,7 @@ Provides foundation for specialized resource types with enhanced functionality
 """
 from __future__ import annotations
 import typing as t
-from loguru import logger as log
+from clientfactory.log import log
 
 from clientfactory.core.resource import Resource, ResourceConfig
 from clientfactory.core.session import Session

@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 
 from clientfactory.core import Request
 from clientfactory.auth.base import BaseAuth, AuthError, AuthState
-from clientfactory.auth.token import TokenAuth, TokenScheme
+from clientfactory.auth.tokens import TokenAuth, TokenScheme
 
 class OAuthError(AuthError):
     """Raised for OAuth related exceptions."""

@@ -5,8 +5,8 @@ State Management
 Manages session state persistence and access
 """
 from __future__ import annotations
-import typing as t
-from loguru import logger as log
+import inspect, typing as t
+from clientfactory.log import log
 
 from clientfactory.declarative import DeclarativeComponent
 from clientfactory.session.state.base import StateStore, StateError
@@ -33,17 +33,37 @@ class StateManager(DeclarativeComponent):
         autosave: t.Optional[bool] = None
     ):
         """Initialize state manager"""
-        if store is not None:
-            self.store = store
-        if autoload is not None:
-            self.autoload = autoload
-        if autosave is not None:
-            self.autosave = autosave
+        from clientfactory.utils.internal import attributes
+        sources = [self, self.__class__]
 
-        self._state: dict = {}
+        if store is None:
+            store = attributes.resolve('store', sources)
+            log.info(f"StateManager: store resolved from sources: {store}")
+        if autoload is None:
+            autoload = attributes.resolve('autoload', sources, default=True)
+            log.info(f"StateManager: autoload resolved from sources: {autoload}")
+        if autosave is None:
+            autosave = attributes.resolve('autosave', sources, default=True)
+            log.info(f"StateManager: autosave resolved from sources: {autosave}")
+
+        self.autoload = autoload
+        self.autosave = autosave
+        self._state = {}
+
+        if (store is not None) and inspect.isclass(store):
+            try:
+                store = store()
+                log.info(f"StateManager: instantiated store ({store.__class__.__name__})")
+            except Exception as e:
+                log.error(f"StateManager: error instantiating store: {e}")
+                store = None
+        self.store = store
 
         if self.store and self.autoload:
-            self.load()
+            try:
+                self.load()
+            except Exception as e:
+                log.error(f"StateManager: failed to load initial state: {e}")
 
     def load(self) -> None:
         """Load state from storage"""

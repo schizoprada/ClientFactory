@@ -10,9 +10,9 @@ from __future__ import annotations
 import re, inspect, typing as t
 from dataclasses import dataclass, field
 from urllib.parse import urljoin, urlparse, urlunparse
-from loguru import logger as log
+from clientfactory.log import log
 
-from clientfactory.core.request import Request, RequestMethod
+from clientfactory.core.request import Request, RequestMethod, RM
 from clientfactory.core.session import Session
 from clientfactory.core.payload import Payload
 from clientfactory.declarative import DeclarativeContainer
@@ -134,10 +134,27 @@ class Resource(DeclarativeContainer):
             if hasattr(current, 'baseurl'):
                 log.debug(f"Found baseurl: {current.baseurl}")
                 return current.baseurl
+
+            if hasattr(current, '_config') and hasattr(current._config, 'baseurl'):
+                log.debug(f"Found baseurl on parent's config: {current._config.baseurl}")
+                return current._config.baseurl
+
+
             current = getattr(current, 'parent', None)
             log.debug(f"Moving to next parent: {current}")
 
-        log.warning("No baseurl found in parent chain")
+
+
+        log.debug("No baseurl found in parent chain, trying class metadata")
+        if hasattr(self.__class__, 'getmetadata'):
+            try:
+                baseurl = self.__class__.getmetadata('baseurl')
+                if baseurl:
+                    log.debug(f"Found baseurl in class metadata: {baseurl}")
+                    return baseurl
+            except:
+                pass
+        log.debug("No baseurl found in parent chain or class metadata")
         return None
 
     def _buildurl(self, path: str) -> str:
@@ -146,7 +163,7 @@ class Resource(DeclarativeContainer):
         log.debug(f"Building URL with baseurl: {baseurl} and path: {path}")
 
         if not baseurl:
-            log.warning(f"No baseurl available, returning path only: {path}")
+            log.debug(f"No baseurl available, returning path only: {path}")
             return path
 
         # Ensure baseurl has a trailing slash for proper joining
@@ -160,6 +177,8 @@ class Resource(DeclarativeContainer):
             log.debug(f"Removed leading slash from path: {path}")
 
         # Join paths properly
+        if ':' in path:
+            path = f"./{path}" # treat paths with colons as relative for urljoin
         fullurl = urljoin(baseurl, path)
         log.debug(f"Final URL after joining: {fullurl}")
         return fullurl
@@ -168,6 +187,7 @@ class Resource(DeclarativeContainer):
         """Build a request object for the method"""
         log.debug(f"Building request for method: {cfg.name} with path: {cfg.path}")
         log.debug(f"Args: {args}, Kwargs: {kwargs}")
+        log.debug(f"Config: {cfg.__dict__}")
 
         # Get the resource path
         resourcepath = self._getfullpath(cfg.path)
@@ -181,24 +201,36 @@ class Resource(DeclarativeContainer):
         url = self._buildurl(resourcepath)
         log.debug(f"Final URL: {url}")
 
+        # Initialize request kwargs
+        reqkwargs = {}
+
         # Process payload if available
         if cfg.payload:
             try:
                 log.debug(f"Processing payload for method {cfg.method}")
-                if cfg.method in (RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH):
-                   payloaddata = cfg.payload.apply(kwargs)
-                   kwargs['json'] = payloaddata
-                   log.debug(f"Added JSON payload: {payloaddata}")
-                else:
-                    kwargs['params'] = cfg.payload.apply(kwargs)
-                    log.debug(f"Added query params: {kwargs['params']}")
-            except Exception as e:
-                log.error(f"Error processing payload: {str(e)}")
-                raise ResourceError(f"Error processing payload: {str(e)}")
+                processedpayload = cfg.payload.apply(kwargs)
 
-        # Create and return the request
-        reqkwargs = {k:v for k, v in kwargs.items() if not hasattr(cfg, 'payload') or k not in getattr(cfg.payload, 'parameters', {})}
-        log.debug(f"Creating request with method: {cfg.method}, url: {url}, kwargs: {reqkwargs}")
+                if cfg.method in (RM.POST, RM.PUT, RM.PATCH):
+                    reqkwargs['json'] = processedpayload
+                    log.debug(f"Added JSON payload: {processedpayload}")
+                else:
+                    reqkwargs['params'] = processedpayload
+                    log.debug(f"Added query params: {processedpayload}")
+            except Exception as e:
+                log.debug(f"Error processing payload: {str(e)}")
+                raise ResourceError(f"Error processing payload: {str(e)}")
+        else:
+            # if no payload, pass all kwargs to the request
+            for k, v in kwargs.items():
+                if k in ['headers', 'cookies', 'data', 'json', 'params', 'files', 'config', 'context']:
+                    reqkwargs[k] = v
+
+        # Add additional request parameters that aren't part of the payload
+        for k, v in kwargs.items():
+            if k in ['headers', 'cookies', 'data', 'files', 'config', 'context']:
+                reqkwargs[k] = v
+
+        log.debug(f"Creating request with method ({cfg.method}) for url ({url}) with kwargs: {reqkwargs}")
 
         request = Request(
             method=cfg.method,
@@ -211,8 +243,13 @@ class Resource(DeclarativeContainer):
     def _createmethod(self, cfg: MethodConfig) -> t.Callable:
         """Create a callable method from method configuration"""
         def method(*args, **kwargs):
+            log.debug(f"DEBUGGING - Method call: {cfg.name}")
+            log.debug(f"Method config: {cfg.__dict__}")
+            log.debug(f"Args: {args}")
+            log.debug(f"Kwargs: {kwargs}")
             log.debug(f"Calling method: {cfg.name}")
             request = self._buildrequest(cfg, *args, **kwargs)
+            log.debug(f"Built request headers: {request.headers}")
             if cfg.preprocess:
                 log.debug(f"Applying preprocessor to request")
                 request = cfg.preprocess(request)

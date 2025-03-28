@@ -6,7 +6,7 @@ Utilities for managing session headers with static and dynamic values.
 """
 from __future__ import annotations
 import typing as t
-from loguru import logger as log
+from clientfactory.log import log
 
 from clientfactory.declarative import DeclarativeComponent
 

@@ -6,7 +6,7 @@ This module defines the ClientBuilder class which provides a fluent API for cons
 """
 from __future__ import annotations
 import typing as t, functools as fn
-from loguru import logger as log
+from clientfactory.log import log
 
 from clientfactory.auth import BaseAuth
 from clientfactory.client.base import Client

@@ -24,8 +24,8 @@ from .resource import (
     get, post, put, patch, delete
 )
 
-from loguru import logger as log
-log.remove() # remove logging during initialization
+from clientfactory.log import log
+##log.remove() # remove logging during initialization
 
 __all__ = [
     'RequestMethod', 'RequestConfig', 'RequestError',

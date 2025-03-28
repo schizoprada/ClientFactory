@@ -5,7 +5,7 @@ Resource Decorators
 Provides decorators for defining API resources in a declarative style.
 """
 import inspect, typing as t, functools as fn
-from loguru import logger as log
+from clientfactory.log import log
 
 from clientfactory.core.resource import ResourceConfig, Resource
 from clientfactory.declarative import DeclarativeContainer
@@ -85,9 +85,21 @@ def resource(
 def searchresource(cls=None, **kwargs):
     """Decorator for search resources"""
     from clientfactory.resources.search import SearchResource
+    from clientfactory.utils.internal import attributes
+
+    def decorator(cls):
+        collectedattrs = attributes.collect(cls, ['payload', 'requestmethod', 'path', 'name'], includemetadata=True, includeconfig=True)
+        for k, v in kwargs.items():
+            if k not in collectedattrs:
+                collectedattrs[k] = v
+        decorated = resource(cls, variant=SearchResource, **kwargs)
+        decorated._attributes = collectedattrs
+        return decorated
+
     if cls is None:
-        return lambda c: resource(c, variant=SearchResource, **kwargs)
-    return resource(cls, variant=SearchResource, **kwargs)
+        return decorator
+    return decorator(cls)
+
 
 def managedresource(cls=None, **kwargs):
     from clientfactory.resources.managed import ManagedResource

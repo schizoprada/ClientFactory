@@ -6,7 +6,7 @@ import pytest
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock, patch
 
-from clientfactory.auth.token import TokenAuth, TokenScheme, TokenError
+from clientfactory.auth.tokens import TokenAuth, TokenScheme, TokenError
 from clientfactory.core import Request, RequestMethod
 
 
@@ -109,7 +109,7 @@ def test_update_token_with_expiration():
     auth = TokenAuth("test-token")
 
     # Update token with expiration
-    with patch('clientfactory.auth.token.datetime') as mock_datetime:
+    with patch('clientfactory.auth.tokens.datetime') as mock_datetime:
         mock_now = datetime(2020, 1, 1, 12, 0, 0)
         mock_datetime.now.return_value = mock_now
 

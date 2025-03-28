@@ -7,7 +7,7 @@ Provides decorators for marking classes and methods with declarative attributes.
 """
 from __future__ import annotations
 import typing as t, functools as fn
-from loguru import logger as log
+from clientfactory.log import log
 
 from clientfactory.declarative.base import DeclarativeComponent, DeclarativeContainer
 

@@ -40,7 +40,7 @@ from .decorators import (
     put, patch, delete,
     head, options, preprocess,
     postprocess, transformrequest, transformresponse,
-    validateinput, validateoutput, clientclass
+    validateinput, validateoutput, #clientclass
 )
 
 from .declarative import (
@@ -80,7 +80,7 @@ __all__ = [
     "put", "patch", "delete",
     "head", "options", "preprocess",
     "postprocess", "transformrequest", "transformresponse",
-    "validateinput", "validateoutput", "clientclass",
+    "validateinput", "validateoutput", #"clientclass",
 
     # declarative
     "DeclarativeMeta", "DeclarativeComponent", "DeclarativeContainer",

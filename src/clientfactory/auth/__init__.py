@@ -8,7 +8,7 @@ from .base import (
 from .basic import (
     BasicAuth
 )
-from .token import (
+from .tokens import (
     TokenScheme, TokenError, TokenAuth
 )
 from .apikey import (
@@ -23,8 +23,8 @@ from .dpop import (
     DpopAuth, DpopError
 )
 
-from loguru import logger as log
-log.remove() # remove logging during initialization
+from clientfactory.log import log
+#log.remove() # remove logging during initialization
 
 __all__ = [
     'BaseAuth', 'AuthError', 'AuthState',

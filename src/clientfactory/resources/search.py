@@ -7,7 +7,7 @@ Resource implementation specialized for search operations.
 from __future__ import annotations
 import typing as t
 from dataclasses import dataclass, field
-from loguru import logger as log
+from clientfactory.log import log
 
 from clientfactory.core.resource import ResourceConfig, MethodConfig
 from clientfactory.core.request import RM, RequestMethod, Request
@@ -36,8 +36,27 @@ class SearchResource(SpecializedResource):
     requestmethod: RequestMethod = RM.GET
     payload: t.Optional[Payload] = None
 
-    def __init__(self, session: Session, config: SearchResourceConfig, **kwargs):
-        super().__init__(session, config, **kwargs)
+    def __init__(self, session: Session, config: SearchResourceConfig, attributes: t.Optional[dict]=None, **kwargs):
+        # Convert basic ResourceConfig to SearchResourceConfig if needed
+        if not isinstance(config, SearchResourceConfig):
+            requestmethod = None
+            if attributes and 'requestmethod' in attributes:
+                requestmethod = attributes['requestmethod']
+                log.debug(f"Found requestmethod in attributes: {requestmethod}")
+            elif hasattr(self, 'requestmethod'):
+                requestmethod = self.requestmethod
+                log.debug(f"Using instance requestmethod: {requestmethod}")
+            searchconfig = SearchResourceConfig(
+                name=config.name,
+                path=config.path,
+                methods=config.methods.copy(),
+                children=config.children.copy(),
+                parent=config.parent,
+                payload=getattr(self, 'payload', None),
+                requestmethod=(requestmethod or RM.GET)
+            )
+            config = searchconfig
+        super().__init__(session, config, attributes, **kwargs)
         self._searchconfig = config
 
 
@@ -53,19 +72,37 @@ class SearchResource(SpecializedResource):
             config.__class__ = SearchResourceConfig
             for k, v in searchconfig.__dict__.items():
                 setattr(config, k, v)
-        for k, v in self._attributes.items():
-            if hasattr(config, k):
-                setattr(config, k, v)
+
+        from clientfactory.utils.internal import attributes
+        if hasattr(self, '_attributes') and self._attributes:
+            attributes.apply(
+                config,
+                self._attributes,
+                overwrite=True,
+                applytoconfig=True,
+                applytometadata=False,
+            )
+
 
 
     def _setupspecialized(self):
         if (not hasattr(self, "search")) and ("search" not in self._config.methods):
             log.debug(f"Adding default search method")
+
+            from clientfactory.utils.internal import attributes
+            sources = [self._config, self, self.__class__]
+
+            payload = attributes.resolve('payload', sources)
+            log.debug(f"Resolved payload: {payload}")
+
+            method = attributes.resolve('requestmethod', sources, default=RM.GET)
+            log.debug(f"Resolved requestmethod: {method}")
+
             methodconfig = MethodConfig(
                 name="search",
-                method=self.getmetadata('requestmethod', RM.GET),
-                path=self._config.path,
-                payload=self.getmetadata('payload')
+                method=method,
+                path=None,
+                payload=payload
             )
             self._config.methods["search"] = methodconfig
             setattr(self, "search", self._createmethod(methodconfig))
