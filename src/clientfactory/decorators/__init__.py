@@ -30,7 +30,7 @@ from .auth import (
 from .session import (
     statestore, jsonstore, picklestore,
     memorystore, statemanager, headers,
-    enhancedsession
+    session, enhancedsession
 )
 
 """from .payload import (

@@ -8,6 +8,7 @@ from __future__ import annotations
 import typing as t
 from clientfactory.log import log
 
+from clientfactory.core.session import Session, SessionConfig
 from clientfactory.session.state.base import StateStore
 from clientfactory.session.state.file import FileStateStore, JSONStateStore, PickleStateStore
 from clientfactory.session.state.memory import MemoryStateStore
@@ -193,6 +194,34 @@ def headers(cls=None, *, static: t.Optional[dict] = None, dynamic: t.Optional[di
         return newcls
 
     return decorator if cls is None else decorator(cls)
+
+def session(cls=None, *, headers: t.Optional[Headers] = None, config: t.Optional[SessionConfig] = None):
+    """
+    Decorator for basic session configuration.
+
+    Can be used with or without arguments:
+        @session
+        class MySession:
+            pass
+
+        @session(headers=MyHeaders())
+        class MySession:
+            pass
+    """
+    metadata = {}
+    if headers is not None:
+        metadata['headers'] = headers
+    if config is not None:
+        metadata['config'] = config
+
+    def decorator(cls):
+        newcls = type(cls.__name__, (Session,), dict(cls.__dict__))
+        for k, v in metadata.items():
+            setattr(cls, k, v)
+        log.debug(f"session: converted ({cls.__name__}) to session")
+        return newcls
+    return decorator if cls is None else decorator(cls)
+
 
 def enhancedsession(cls=None, *, statemanager: t.Optional[StateManager] = None, headers: t.Optional[Headers] = None, persistcookies: bool = False):
     """

@@ -8,7 +8,7 @@ Provides structures for parameter validation, transformation, and mapping
 from __future__ import annotations
 import enum, typing as t, copy as cp
 from dataclasses import dataclass, field
-
+from clientfactory.log import log
 
 class ParameterType(enum.Enum):
     """Types of parameters for classification and processing"""
@@ -203,13 +203,18 @@ class Payload:
 
     def apply(self, data: t.Dict[str, t.Any]) -> t.Dict[str, t.Any]:
         """Apply validation and transformation to data"""
+        log.info(f"payload.apply: received data: {data}")
         self.validate(data)
         result = cp.deepcopy(self.static)
-        for name, param in self.parameters.items():
-            if name in data:
-                result[name] = param.apply(data[name])
+        for attrname, param in self.parameters.items():
+            log.info(f"payload.apply: processing payload kwarg ({attrname}) with parameter: {param} ")
+            paramname = param.name if param.name is not None else attrname
+            if attrname in data:
+                processed = param.apply(data[attrname])
+                result[paramname] = processed
             elif param.default is not None:
-                result[name] = cp.deepcopy(param.default)
+                result[paramname] = cp.deepcopy(param.default)
+        log.info(f"payload.apply: returning result: {result}")
         return result
 
 
