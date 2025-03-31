@@ -41,6 +41,7 @@ class Response:
     headers: dict
     rawcontent: bytes
     request: Request
+    cookies: dict = field(default_factory=dict)
     _parsedjson: t.Optional[t.Any] = field(default=None, repr=False)
 
     @property
@@ -122,6 +123,12 @@ class Response:
                 return v
         return default
 
+    def _extractcookies(self, parts: list, default: t.Any) -> t.Any:
+        if not parts:
+            return default
+        cookiename = parts[0]
+        return self.cookies.get(cookiename, default)
+
     def _extractquery(self, parts: list, default: t.Any) -> t.Any:
         """Extract value from request URL query parameters"""
         if not parts:
@@ -149,7 +156,8 @@ class Response:
         extractors = {
             'json': self._extractjson,
             'headers': self._extractheaders,
-            'query': self._extractquery
+            'query': self._extractquery,
+            'cookies': self._extractcookies
         }
         returndefault = lambda x, y: default
         try:

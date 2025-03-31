@@ -39,6 +39,9 @@ class Parameter:
     description: str = ""
     choices: t.Optional[t.List[t.Any]] = None
     transform: t.Optional[t.Callable[[t.Any], t.Any]] = None
+    valuemap: t.Optional[t.Dict] = None
+    mapmethod: t.Optional[t.Callable[[t.Any, t.Dict], t.Any]] = None
+
 
     def _validatetype(self, value: t.Any) -> bool:
         typemap = {
@@ -65,6 +68,17 @@ class Parameter:
                 raise ValidationError(f"Parameter '{self.name}' is required")
             return True
 
+        # For ARRAY type, check each item individually
+        if self.type == PT.ARRAY:
+            if not isinstance(value, (list, tuple)):
+                raise ValidationError(f"Parameter '{self.name}' must be of type list/tuple, got {type(value).__name__}")
+            for item in value:
+                if self.choices is not None and item not in self.choices:
+                    raise ValidationError(
+                        f"Each element in parameter '{self.name}' must be one of {self.choices}, got <{item}>"
+                    )
+            return True
+
         if self.type != ParameterType.ANY:
             if not (typevalid:=self._validatetype(value)):
                 if self.required:
@@ -80,15 +94,57 @@ class Parameter:
 
         return True
 
+    def _mapval(self, val: t.Any) -> t.Any:
+        """Internal helper which maps a single value via valuemap, optionally using mapmethod."""
+        if self.valuemap is not None:
+            if self.mapmethod is not None:
+                from fuzzywuzzy import process
+                print(f"Using mapmethod: {self.mapmethod.__name__} | with value: {val}")
+                result = self.mapmethod(val, list(self.valuemap.keys()))
+                print(f"Mapmethod result: {result}")
+                if self.mapmethod == process.extractOne:
+                    bestmatch = result[0]
+                    print(f"Extracted bestmatch: {bestmatch}")
+                    mapped = self.valuemap.get(bestmatch, bestmatch)
+                    print(f"Final mapped value: {mapped}")
+                    return mapped
+                else:
+                    print(f"Using result directly: {result}")
+                    return result
+            else:
+                print(f"Direct valuemap lookup")
+                return self.valuemap.get(val, val)
+        print(f"No mapping applied, returning: {val}")
+        return val
+
     def apply(self, value: t.Any) -> t.Any:
         """Apply validation and transformation to a value"""
         if (value is None) and (self.default is not None):
             value = cp.deepcopy(self.default)
+            print(f"Using default: {value}")
 
+
+        if self.valuemap is not None:
+            print(f"Applying valuemap")
+            if self.type == PT.ARRAY:
+                mapped = [self._mapval(v) for v in value]
+                print(f"Mapped array: {value} -> {mapped}")
+                value = mapped
+            else:
+                mapped = self._mapval(value)
+                print(f"Mapped value: {value} -> {mapped}")
+                value = mapped
+            print(f"\nValue after mapping: {value}\n")
+
+        print(f"About to validate: {value}")
         self.validate(value)
+        print(f"Validation passed")
+
 
         if (self.transform is not None) and (value is not None):
-            return self.transform(value)
+            transformed = self.transform(value)
+            print(f"Transformed: {value} -> {transformed}")
+            return transformed
 
         return value
 
@@ -148,7 +204,7 @@ class Payload:
     A payload consists of parameters with validation and transformation rules,
     as well as static values that are always included.
     """
-    def __init__(self, **kwargs):
+    def __init__(self, transform: t.Optional[t.Callable] = None, **kwargs):
         """
         Initialize a payload with parameters.
 
@@ -163,7 +219,9 @@ class Payload:
         """
         self.parameters = {}
         self.static = {}
-
+        if transform and not isinstance(transform, t.Callable):
+            raise ValidationError(f"Transform must be callable")
+        self.transform = transform
         # Process keyword arguments as parameters
         for name, value in kwargs.items():
             if isinstance(value, Parameter):
@@ -214,6 +272,10 @@ class Payload:
                 result[paramname] = processed
             elif param.default is not None:
                 result[paramname] = cp.deepcopy(param.default)
+        if self.transform is not None and callable(self.transform):
+            log.info(f"payload.apply: applying transform func ({self.transform.__name__})")
+            result = self.transform(result)
+            log.info(f"payload.apply: result after transform: {result}")
         log.info(f"payload.apply: returning result: {result}")
         return result
 
@@ -308,6 +370,64 @@ class PayloadTemplate:
         )
 
 
+class PayloadParameter(Parameter):
+    """
+    Parameter that contains a nested Payload.
+
+    Allows for composing complex payload structures by nesting
+    payloads within parameters.
+    """
+    def __init__(self, payload: Payload, **kwargs):
+        """
+        Initialize a parameter with a nested payload.
+
+        Args:
+            payload: The nested Payload object to process values through
+            **kwargs: Additional Parameter configuration options
+        """
+        super().__init__(**kwargs)
+        self.nestedpayload = payload
+        self.type = PT.OBJECT
+
+    def validate(self, value: t.Any) -> bool:
+        """
+        Validate the value as an object.
+
+        For nested payloads, we simply check if it's an object
+        or None (which will be converted to an empty dict).
+        """
+        if value is None:
+            return True
+
+        if not isinstance(value, dict):
+            if self.required:
+                raise ValidationError(f"Parameter '{self.name}' must be an object, got {type(value).__name__}")
+            return False
+
+        return True
+
+    def apply(self, value: t.Any) -> t.Dict[str, t.Any]:
+        """
+        Process value through the nested payload.
+
+        This applies validation and processing in three steps:
+        1. Validate as a regular parameter
+        2. Process through the nested payload
+        3. Apply any transformation
+        """
+        self.validate(value)
+
+        valdict = value if value is not None else {}
+
+        result = self.nestedpayload.apply(valdict)
+
+        if self.transform is not None:
+            result = self.transform(result)
+
+        return result
+
+
+
 class NestedPayload(Payload):
     """
     Payload that handles nested parameter structures.
@@ -336,16 +456,23 @@ class NestedPayload(Payload):
         """
         self.root = root
         self.static = (static or {})
+        self.transform = None
+        self.transforms = {}
 
         # Handle different input types
         if params is not None:
             super().__init__(**params)
         elif payload is not None:
             self.parameters = payload.parameters.copy()
+            if hasattr(payload, 'transform'):
+                self.transform = payload.transform
         elif payloads is not None:
             # Merge multiple payloads
             merged = {}
             for p in payloads:
+                if hasattr(p, 'transform') and (p.transform is not None):
+                    payloadname = getattr(p, '__name__', f"payload:{id(p)}")
+                    self.transforms[payloadname] = p.transform
                 merged.update(p.parameters)
             self.parameters = merged
         else:
@@ -353,6 +480,9 @@ class NestedPayload(Payload):
 
     def apply(self, data: t.Dict[str, t.Any]) -> t.Dict[str, t.Any]:
         """Apply validation and transformation with nesting"""
+
+        # TODO:
+            # implement multi-payload application
         processed = super().apply(data)
         result = self.static.copy()
         result[self.root] = processed

@@ -16,7 +16,7 @@ from clientfactory.core.request import Request, RequestMethod, RM
 from clientfactory.core.session import Session
 from clientfactory.core.payload import Payload
 from clientfactory.declarative import DeclarativeContainer
-
+from clientfactory.backends.base import Backend, BackendType
 
 class ResourceError(Exception):
     """Base exception for resource-related errors"""
@@ -42,7 +42,7 @@ class ResourceConfig:
     methods: t.Dict[str, MethodConfig] = field(default_factory=dict)
     children: t.Dict[str, 'ResourceConfig'] = field(default_factory=dict)
     parent: t.Optional[t.Union['ResourceConfig', t.Any]] = None
-
+    backend: t.Optional[Backend] = None
 
 class Resource(DeclarativeContainer):
     """
@@ -60,12 +60,17 @@ class Resource(DeclarativeContainer):
     __declarativetype__ = 'resource'
     path: str = ""
     name: t.Optional[str] = None
+    backend: t.Optional[Backend] = None
 
-    def  __init__(self, session: Session, config: ResourceConfig):
+
+    def  __init__(self, session: Session, config: ResourceConfig, backend: t.Optional[Backend] = None):
         self._session = session
         self._config = config
-        log.debug(f"Initializing resource: {config.name} with path: {config.path}")
-        log.debug(f"Resource parent: {config.parent}")
+        #log.debug(f"Initializing resource: {config.name} with path: {config.path}")
+        #log.debug(f"Resource parent: {config.parent}")
+
+        self._backend = (backend or getattr(config, 'backend', None))
+
         self._setup()
 
     def _getfullpath(self, path: t.Optional[str] = None) -> str:
@@ -76,21 +81,21 @@ class Resource(DeclarativeContainer):
         while current:
             if hasattr(current, 'path') and current.path:
                 parts.append(current.path)
-                log.debug(f"Adding path part: {current.path}")
+                #log.debug(f"Adding path part: {current.path}")
             current = getattr(current, 'parent', None)
-            log.debug(f"Moving to parent: {current}")
+            #log.debug(f"Moving to parent: {current}")
 
         # reverse to get root-> leaf order
         parts.reverse()
-        log.debug(f"Path parts after reverse: {parts}")
+        #log.debug(f"Path parts after reverse: {parts}")
 
         # add method path if provided
         if path:
             parts.append(path)
-            log.debug(f"Added method path: {path}")
+            #log.debug(f"Added method path: {path}")
 
         finalpath = '/'.join(part.strip('/') for part in parts if part)
-        log.debug(f"Final constructed path: {finalpath}")
+        #log.debug(f"Final constructed path: {finalpath}")
         return finalpath
 
     def _substitutepathparams(self, path: str, args: tuple, kwargs: dict) -> str:
@@ -100,13 +105,13 @@ class Resource(DeclarativeContainer):
 
         parampattern = r'\{([^}]+)\}'
         params = re.findall(parampattern, path)
-        log.debug(f"Path parameters found: {params}")
+        #log.debug(f"Path parameters found: {params}")
 
         if not params:
             return path
 
         if args:
-            log.debug(f"Using positional args for path params: {args}")
+            #log.debug(f"Using positional args for path params: {args}")
             if len(args) != len(params):
                 raise ResourceError(
                     f"Expected {len(params)} positional arguments "
@@ -115,91 +120,91 @@ class Resource(DeclarativeContainer):
             for param, arg in zip(params, args):
                 path = path.replace(f"{{{param}}}", str(arg))
         else:
-            log.debug(f"Using keyword args for path params: {kwargs}")
+            #log.debug(f"Using keyword args for path params: {kwargs}")
             for param in params:
                 if param not in kwargs:
                     raise ResourceError(f"Missing required path parameter: '{param}'")
                 path = path.replace(f"{{{param}}}", str(kwargs.pop(param)))
-                log.debug(f"Replaced param {param} in path, now: {path}")
+                #log.debug(f"Replaced param {param} in path, now: {path}")
 
         return path
 
     def _getbaseurl(self) -> t.Optional[str]:
         """Get the base URL from the client"""
         current = self._config.parent
-        log.debug(f"Getting base URL, starting with parent: {current}")
+        #log.debug(f"Getting base URL, starting with parent: {current}")
 
         while current:
-            log.debug(f"Checking parent: {current}")
+            #log.debug(f"Checking parent: {current}")
             if hasattr(current, 'baseurl'):
-                log.debug(f"Found baseurl: {current.baseurl}")
+                #log.debug(f"Found baseurl: {current.baseurl}")
                 return current.baseurl
 
             if hasattr(current, '_config') and hasattr(current._config, 'baseurl'):
-                log.debug(f"Found baseurl on parent's config: {current._config.baseurl}")
+                #log.debug(f"Found baseurl on parent's config: {current._config.baseurl}")
                 return current._config.baseurl
 
 
             current = getattr(current, 'parent', None)
-            log.debug(f"Moving to next parent: {current}")
+            #log.debug(f"Moving to next parent: {current}")
 
 
 
-        log.debug("No baseurl found in parent chain, trying class metadata")
+        #log.debug("No baseurl found in parent chain, trying class metadata")
         if hasattr(self.__class__, 'getmetadata'):
             try:
                 baseurl = self.__class__.getmetadata('baseurl')
                 if baseurl:
-                    log.debug(f"Found baseurl in class metadata: {baseurl}")
+                    #log.debug(f"Found baseurl in class metadata: {baseurl}")
                     return baseurl
             except:
                 pass
-        log.debug("No baseurl found in parent chain or class metadata")
+        #log.debug("No baseurl found in parent chain or class metadata")
         return None
 
     def _buildurl(self, path: str) -> str:
         """Build a full URL from base URL and path"""
         baseurl = self._getbaseurl()
-        log.debug(f"Building URL with baseurl: {baseurl} and path: {path}")
+        #log.debug(f"Building URL with baseurl: {baseurl} and path: {path}")
 
         if not baseurl:
-            log.debug(f"No baseurl available, returning path only: {path}")
+            #log.debug(f"No baseurl available, returning path only: {path}")
             return path
 
         # Ensure baseurl has a trailing slash for proper joining
         if not baseurl.endswith('/'):
             baseurl += '/'
-            log.debug(f"Added trailing slash to baseurl: {baseurl}")
+            #log.debug(f"Added trailing slash to baseurl: {baseurl}")
 
         # If path starts with slash, remove it for proper joining
         if path.startswith('/'):
             path = path[1:]
-            log.debug(f"Removed leading slash from path: {path}")
+            #log.debug(f"Removed leading slash from path: {path}")
 
         # Join paths properly
         if ':' in path:
             path = f"./{path}" # treat paths with colons as relative for urljoin
         fullurl = urljoin(baseurl, path)
-        log.debug(f"Final URL after joining: {fullurl}")
+        #log.debug(f"Final URL after joining: {fullurl}")
         return fullurl
 
     def _buildrequest(self, cfg: MethodConfig, *args, **kwargs) -> Request:
         """Build a request object for the method"""
-        log.debug(f"Building request for method: {cfg.name} with path: {cfg.path}")
-        log.debug(f"Args: {args}, Kwargs: {kwargs}")
-        log.debug(f"Config: {cfg.__dict__}")
+        #log.debug(f"Building request for method: {cfg.name} with path: {cfg.path}")
+        #log.debug(f"Args: {args}, Kwargs: {kwargs}")
+        #log.debug(f"Config: {cfg.__dict__}")
 
         # Get the resource path
         resourcepath = self._getfullpath(cfg.path)
-        log.debug(f"Full resource path: {resourcepath}")
+        #log.debug(f"Full resource path: {resourcepath}")
 
         # Substitute path parameters
         resourcepath = self._substitutepathparams(resourcepath, args, kwargs)
-        log.debug(f"Path after parameter substitution: {resourcepath}")
+        #log.debug(f"Path after parameter substitution: {resourcepath}")
 
         # Build the complete URL
         url = self._buildurl(resourcepath)
-        log.debug(f"Final URL: {url}")
+        #log.debug(f"Final URL: {url}")
 
         # Initialize request kwargs
         reqkwargs = {}
@@ -207,17 +212,17 @@ class Resource(DeclarativeContainer):
         # Process payload if available
         if cfg.payload:
             try:
-                log.debug(f"Processing payload for method {cfg.method}")
+                #log.debug(f"Processing payload for method {cfg.method}")
                 processedpayload = cfg.payload.apply(kwargs)
 
                 if cfg.method in (RM.POST, RM.PUT, RM.PATCH):
                     reqkwargs['json'] = processedpayload
-                    log.debug(f"Added JSON payload: {processedpayload}")
+                    #log.debug(f"Added JSON payload: {processedpayload}")
                 else:
                     reqkwargs['params'] = processedpayload
-                    log.debug(f"Added query params: {processedpayload}")
+                    #log.debug(f"Added query params: {processedpayload}")
             except Exception as e:
-                log.debug(f"Error processing payload: {str(e)}")
+                #log.debug(f"Error processing payload: {str(e)}")
                 raise ResourceError(f"Error processing payload: {str(e)}")
         else:
             # if no payload, pass all kwargs to the request
@@ -230,36 +235,43 @@ class Resource(DeclarativeContainer):
             if k in ['headers', 'cookies', 'data', 'files', 'config', 'context']:
                 reqkwargs[k] = v
 
-        log.debug(f"Creating request with method ({cfg.method}) for url ({url}) with kwargs: {reqkwargs}")
+        #log.debug(f"Creating request with method ({cfg.method}) for url ({url}) with kwargs: {reqkwargs}")
 
         request = Request(
             method=cfg.method,
             url=url,
             **reqkwargs
         )
-        log.debug(f"Created request: {request}")
+
+        if self._backend:
+            request = self._backend.preparerequest(request, kwargs)
+
+        #log.debug(f"Created request: {request}")
         return request
 
     def _createmethod(self, cfg: MethodConfig) -> t.Callable:
         """Create a callable method from method configuration"""
         def method(*args, **kwargs):
-            log.debug(f"DEBUGGING - Method call: {cfg.name}")
-            log.debug(f"Method config: {cfg.__dict__}")
-            log.debug(f"Args: {args}")
-            log.debug(f"Kwargs: {kwargs}")
-            log.debug(f"Calling method: {cfg.name}")
+            #log.debug(f"DEBUGGING - Method call: {cfg.name}")
+            #log.debug(f"Method config: {cfg.__dict__}")
+            #log.debug(f"Args: {args}")
+            #log.debug(f"Kwargs: {kwargs}")
+            #log.debug(f"Calling method: {cfg.name}")
             request = self._buildrequest(cfg, *args, **kwargs)
-            log.debug(f"Built request headers: {request.headers}")
+            #log.debug(f"Built request headers: {request.headers}")
             if cfg.preprocess:
-                log.debug(f"Applying preprocessor to request")
+                #log.debug(f"Applying preprocessor to request")
                 request = cfg.preprocess(request)
 
-            log.debug(f"Sending request: {request}")
+            #log.debug(f"Sending request: {request}")
             response = self._session.send(request)
-            log.debug(f"Received response: status={response.statuscode}")
+            #log.debug(f"Received response: status={response.statuscode}")
+
+            if self._backend:
+                response = self._backend.processresponse(response)
 
             if cfg.postprocess:
-                log.debug(f"Applying postprocessor to response")
+                #log.debug(f"Applying postprocessor to response")
                 return cfg.postprocess(response)
             return response
         method.__name__ = cfg.name
@@ -270,12 +282,12 @@ class Resource(DeclarativeContainer):
         """Set up methods and child resources"""
         # set up resource methods
         for name, mcfg in self._config.methods.items():
-            log.debug(f"Setting up method: {name}")
+            #log.debug(f"Setting up method: {name}")
             if not hasattr(self, name):
                 setattr(self, name, self._createmethod(mcfg))
 
         for name, ccfg in self._config.children.items():
-            log.debug(f"Setting up child resource: {name}")
+            #log.debug(f"Setting up child resource: {name}")
             if not hasattr(self, name):
                 ccfg.parent = self._config
                 setattr(self, name, Resource(self._session, ccfg))
@@ -283,28 +295,29 @@ class Resource(DeclarativeContainer):
     @classmethod
     def _processclassattributes(cls) -> None:
         """Process resource-specific class attributes."""
-        log.debug(f"DeclarativeResource: starting attribute processing for ({cls.__name__})")
-        log.debug(f"DeclarativeResource: current metadata before processing: {cls.__metadata__}")
+        #log.debug(f"DeclarativeResource: starting attribute processing for ({cls.__name__})")
+        #log.debug(f"DeclarativeResource: current metadata before processing: {cls.__metadata__}")
 
         # Set name FIRST, before any inheritance
         if ('name' not in cls.__metadata__):
             cls.__metadata__['name'] = cls.__name__.lower()
-            log.debug(f"DeclarativeResource: set name to ({cls.__metadata__['name']}) for: {cls.__name__}")
+            #log.debug(f"DeclarativeResource: set name to ({cls.__metadata__['name']}) for: {cls.__name__}")
         else:
-            log.debug(f"DeclarativeResource: name already set to ({cls.__metadata__['name']}) for: {cls.__name__}")
+            pass
+            #log.debug(f"DeclarativeResource: name already set to ({cls.__metadata__['name']}) for: {cls.__name__}")
 
         # Then do normal processing
-        log.debug(f"DeclarativeResource: calling super()._processclassattributes for: {cls.__name__}")
+        #log.debug(f"DeclarativeResource: calling super()._processclassattributes for: {cls.__name__}")
         super()._processclassattributes()
-        log.debug(f"DeclarativeResource: returned from super()._processclassattributes for: {cls.__name__}")
-        log.debug(f"DeclarativeResource: metadata after super(): {cls.__metadata__}")
+        #log.debug(f"DeclarativeResource: returned from super()._processclassattributes for: {cls.__name__}")
+        #log.debug(f"DeclarativeResource: metadata after super(): {cls.__metadata__}")
 
         # Process path after other attributes
         if ('path' not in cls.__metadata__) and (hasattr(cls, 'path')):
             cls.__metadata__['path'] = cls.path.lstrip('/').rstrip('/')
-            log.debug(f"DeclarativeResource: extracted path ({cls.path}) from: {cls.__name__}")
+            #log.debug(f"DeclarativeResource: extracted path ({cls.path}) from: {cls.__name__}")
 
-        log.debug(f"DeclarativeResource: completed processing for ({cls.__name__}) - final metadata: {cls.__metadata__}")
+        #log.debug(f"DeclarativeResource: completed processing for ({cls.__name__}) - final metadata: {cls.__metadata__}")
 
 
     @classmethod
@@ -354,12 +367,12 @@ class ResourceBuilder:
             path=(path or name.lower())
         )
         self._session = None
-        log.debug(f"Created ResourceBuilder for {name} with path {self._config.path}")
+        #log.debug(f"Created ResourceBuilder for {name} with path {self._config.path}")
 
     def path(self, path: str) -> ResourceBuilder:
         """Set the resource path"""
         self._config.path = path
-        log.debug(f"Set resource path to: {path}")
+        #log.debug(f"Set resource path to: {path}")
         return self
 
     def addmethod(
@@ -382,7 +395,7 @@ class ResourceBuilder:
             postprocess=postprocess,
             description=description
         )
-        log.debug(f"Added method {name} with path {path}")
+        #log.debug(f"Added method {name} with path {path}")
         return self
 
     def addchild(self, name: str, child: (ResourceBuilder | ResourceConfig)) -> ResourceBuilder:
@@ -394,21 +407,21 @@ class ResourceBuilder:
 
         childcfg.parent = self._config
         self._config.children[name] = childcfg
-        log.debug(f"Added child resource: {name}")
+        #log.debug(f"Added child resource: {name}")
         return self
 
     def session(self, session: Session) -> ResourceBuilder:
         """Set the session to use for this resource"""
         self._session = session
-        log.debug(f"Set session for resource")
+        #log.debug(f"Set session for resource")
         return self
 
     def build(self) -> Resource:
         """Build and return a Resource with the configured options"""
         if not self._session:
-            log.error("Cannot build resource: Session is required")
+            #log.error("Cannot build resource: Session is required")
             raise ResourceError("Session is required to build a Resource")
-        log.debug(f"Building resource: {self._config.name}")
+        #log.debug(f"Building resource: {self._config.name}")
         return Resource(self._session, self._config)
 
 
@@ -422,7 +435,7 @@ def decoratormethod(method: RequestMethod, path: t.Optional[str] = None, **kwarg
             path=path,
             **kwargs
         )
-        log.debug(f"Created method decorator for {func.__name__} with path {path}")
+        #log.debug(f"Created method decorator for {func.__name__} with path {path}")
         return func
     return decorator
 

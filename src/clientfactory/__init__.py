@@ -4,7 +4,7 @@ ClientFactory
 -------------
 A declarative framework for building API clients with minimal boilerplate.
 """
-__version__ = "0.7.0"
+__version__ = "0.6.9"
 __author__ = "Joel Yisrael"
 __license__ = "MIT"
 
@@ -49,6 +49,12 @@ from .declarative import (
     isdeclarative, getclassmetadata, copymetadata
 )
 
+
+from clientfactory.log import log
+from loguru import logger
+
+#log.remove()
+#logger.remove()
 
 __all__ = [
     # auth

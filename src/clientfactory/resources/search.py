@@ -15,13 +15,15 @@ from clientfactory.core.session import Session
 from clientfactory.core.response import Response
 from clientfactory.core.payload import Payload, Parameter, ParameterType
 from clientfactory.resources.base import SpecializedResource
+from clientfactory.backends.base import Backend, BackendType
+
 
 @dataclass
 class SearchResourceConfig(ResourceConfig):
     """Configuration for search resources"""
     payload: t.Optional[Payload] = None
     requestmethod: RequestMethod = RM.GET
-
+    backend: t.Optional[Backend] = None
 
 class SearchResource(SpecializedResource):
     """
@@ -35,8 +37,10 @@ class SearchResource(SpecializedResource):
     __declarativetype__ = 'search'
     requestmethod: RequestMethod = RM.GET
     payload: t.Optional[Payload] = None
+    oncall: bool = False
+    backend: t.Optional[Backend] = None
 
-    def __init__(self, session: Session, config: SearchResourceConfig, attributes: t.Optional[dict]=None, **kwargs):
+    def __init__(self, session: Session, config: SearchResourceConfig, attributes: t.Optional[dict]=None, backend: t.Optional[Backend] = None, **kwargs):
         # Convert basic ResourceConfig to SearchResourceConfig if needed
         if not isinstance(config, SearchResourceConfig):
             requestmethod = None
@@ -72,6 +76,9 @@ class SearchResource(SpecializedResource):
             config.__class__ = SearchResourceConfig
             for k, v in searchconfig.__dict__.items():
                 setattr(config, k, v)
+        if hasattr(self, 'backend') and self.backend:
+            config.backend = self.backend
+
 
         from clientfactory.utils.internal import attributes
         if hasattr(self, '_attributes') and self._attributes:
@@ -105,4 +112,7 @@ class SearchResource(SpecializedResource):
                 payload=payload
             )
             self._config.methods["search"] = methodconfig
-            setattr(self, "search", self._createmethod(methodconfig))
+            callablemethod = self._createmethod(methodconfig)
+            setattr(self, "search", callablemethod)
+            if self.oncall:
+                self.__call__ = callablemethod

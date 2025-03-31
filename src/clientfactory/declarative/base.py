@@ -27,25 +27,25 @@ class DeclarativeMeta(type):
 
     def __new__(mcs, name, bases, namespace, **kwargs):
         # create the class to make it referencable
-        log.debug(f"DeclarativeMeta: creating class ({name})")
+        #log.debug(f"DeclarativeMeta: creating class ({name})")
         cls = super().__new__(mcs, name, bases, namespace, **kwargs)
 
         cls.__metadata__ = {}
-        #log.debug(f"DeclarativeMeta: initial metadata: {cls.__metadata__}")
+        ##log.debug(f"DeclarativeMeta: initial metadata: {cls.__metadata__}")
 
         # Process inheritance first (in reverse order)
         for base in reversed(bases):
-            #log.debug(f"DeclarativeMeta: processing base class ({base.__name__}) for ({name})")
+            ##log.debug(f"DeclarativeMeta: processing base class ({base.__name__}) for ({name})")
             if hasattr(base, '__metadata__'):
-                #log.debug(f"DeclarativeMeta: base ({base.__name__}) has metadata: {base.__metadata__}")
+                ##log.debug(f"DeclarativeMeta: base ({base.__name__}) has metadata: {base.__metadata__}")
                 for k, v in base.__metadata__.items():
                     if (k not in cls.__metadata__) and (k not in mcs.DONTCOPY):
                         cancopy = mcs._cancopy(v)
-                        #log.debug(f"DeclarativeMeta: copying ({k}) from ({base.__name__}) to ({name}) - cancopy: {cancopy}")
+                        ##log.debug(f"DeclarativeMeta: copying ({k}) from ({base.__name__}) to ({name}) - cancopy: {cancopy}")
                         cls.__metadata__[k] = (cp.deepcopy(v) if cancopy else v)
 
         # Process current class attributes
-        #log.debug(f"DeclarativeMeta: processing attributes for ({name})")
+        ##log.debug(f"DeclarativeMeta: processing attributes for ({name})")
         for n, val in namespace.items():
             if (
                 not n.startswith('_')
@@ -56,20 +56,20 @@ class DeclarativeMeta(type):
                 and
                 not isinstance(val, property)
             ):
-                #log.debug(f"DeclarativeMeta: processing attribute ({n}) with value ({val}) for ({name})")
+                ##log.debug(f"DeclarativeMeta: processing attribute ({n}) with value ({val}) for ({name})")
                 cls.__metadata__[n] = val
 
         if hasattr(cls, '__declarativetype__'):
             if cls.__declarativetype__ == 'resource':
                 cls.__metadata__['name'] = cls.__name__.lower()
-                #log.debug(f"DeclarativeMeta: set resource name ({cls.__metadata__['name']}) for: {name}")
+                ##log.debug(f"DeclarativeMeta: set resource name ({cls.__metadata__['name']}) for: {name}")
 
         if hasattr(cls, '_processclassattributes'):
-            #log.debug(f"DeclarativeMeta: calling _processclassattributes for ({name})")
+            ##log.debug(f"DeclarativeMeta: calling _processclassattributes for ({name})")
             cls._processclassattributes()
-            log.debug(f"DeclarativeMeta: _processclassattributes completed for ({name})")
+            #log.debug(f"DeclarativeMeta: _processclassattributes completed for ({name})")
 
-        log.debug(f"DeclarativeMeta: completed creation of ({name}) - metadata: {cls.__metadata__}")
+        #log.debug(f"DeclarativeMeta: completed creation of ({name}) - metadata: {cls.__metadata__}")
         return cls
 
 class DeclarativeComponent(metaclass=DeclarativeMeta):
@@ -146,25 +146,25 @@ class DeclarativeContainer(DeclarativeComponent):
 
         Extends the base implementation to also cover and process nested declarative components and decorated methods.
         """
-        log.debug(f"DeclarativeContainer: starting attribute processing for ({cls.__name__})")
+        #log.debug(f"DeclarativeContainer: starting attribute processing for ({cls.__name__})")
         #super()._processclassattributes() // No need to call super() since basic processing is in metaclass
 
         for k in (requiredcontainers:={'components', 'methods'}):
             if k not in cls.__metadata__:
                 cls.__metadata__[k] = {}
-                #log.debug(f"DeclarativeContainer: initialized ({k}) container for ({cls.__name__})")
+                ##log.debug(f"DeclarativeContainer: initialized ({k}) container for ({cls.__name__})")
 
         for name, value in cls.__dict__.items():
-            #log.debug(f"DeclarativeContainer: examining attribute ({name}) on ({cls.__name__})")
+            ##log.debug(f"DeclarativeContainer: examining attribute ({name}) on ({cls.__name__})")
             if (name.startswith('__')) and (name.endswith('__')):
-                #log.debug(f"DeclarativeContainer: skipping special attribute ({name})")
+                ##log.debug(f"DeclarativeContainer: skipping special attribute ({name})")
                 continue # skip special attributes
 
             # process nested classes
             if (inspect.isclass(value)):
-                #log.debug(f"DeclarativeContainer: found class ({value.__name__}) on ({cls.__name__})")
+                ##log.debug(f"DeclarativeContainer: found class ({value.__name__}) on ({cls.__name__})")
                 if (hasattr(value, '__metadata__')):
-                    #log.debug(f"DeclarativeContainer: class ({value.__name__}) has metadata: {value.__metadata__}")
+                    ##log.debug(f"DeclarativeContainer: class ({value.__name__}) has metadata: {value.__metadata__}")
                     value.setmetadata('parent', cls)
                     componentname = (
                         value.__metadata__.get('name')
@@ -172,15 +172,15 @@ class DeclarativeContainer(DeclarativeComponent):
                         else name.lower()
                     )
                     cls.__metadata__['components'][componentname] = value
-                    #log.debug(f"DeclarativeContainer: registered component ({componentname}) on: {cls.__name__}")
+                    ##log.debug(f"DeclarativeContainer: registered component ({componentname}) on: {cls.__name__}")
 
             elif callable(value):
-                #log.debug(f"DeclarativeContainer: found callable ({name}) on: {cls.__name__}")
+                ##log.debug(f"DeclarativeContainer: found callable ({name}) on: {cls.__name__}")
                 if hasattr(value, '__declarativemethod__'):
                     cls.__metadata__['methods'][name] = value
-                    log.debug(f"DeclarativeContainer: registered method ({name}) on: {cls.__name__}")
+                    #log.debug(f"DeclarativeContainer: registered method ({name}) on: {cls.__name__}")
 
-        log.debug(f"DeclarativeContainer: completed processing for ({cls.__name__}) - metadata: {cls.__metadata__}")
+        #log.debug(f"DeclarativeContainer: completed processing for ({cls.__name__}) - metadata: {cls.__metadata__}")
 
 
 # utilities
@@ -214,4 +214,4 @@ def copymetadata(source: t.Type, target: t.Type, keys: t.Optional[list] = None) 
     else:
         target.__metadata__.update(cp.deepcopy(source.__metadata__))
 
-    log.debug(f"copymetadata: Copied metadata from ({source.__name__}) to ({target.__name__})")
+    #log.debug(f"copymetadata: Copied metadata from ({source.__name__}) to ({target.__name__})")

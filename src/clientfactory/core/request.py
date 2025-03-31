@@ -11,6 +11,8 @@ import enum, typing as t, copy as cp
 from dataclasses import dataclass, field
 import urllib.parse
 
+from clientfactory.log import log
+
 class RequestMethod(str, enum.Enum):
     """HTTP Request Methods"""
     GET = "GET"
@@ -33,6 +35,8 @@ class RequestConfig:
     verifyssl: bool = True
     allowredirects: bool = True
     stream: bool = False
+    randomheaders: bool = False
+    randomcookies: bool = False
 
 class RequestError(Exception):
     """Base exception for request-related errors"""
@@ -59,6 +63,9 @@ class Request:
     json: t.Optional[t.Dict[str, t.Any]] = None
     files: t.Optional[t.Dict[str, t.Any]] = None
     config: RequestConfig = field(default_factory=RequestConfig)
+
+    # initialization configs
+    randomheaders: bool = False
 
     # additional metadata for internal use
     context: t.Dict[str, t.Any] = field(default_factory=dict)
@@ -95,6 +102,15 @@ class Request:
 
         # ensure headers dict exists
         prepared.headers = (prepared.headers or {})
+
+        # handle random if toggled
+        if self.randomheaders:
+            try:
+                from fake_headers import Headers as H
+                headers = H(headers=True).generate()
+                prepared.headers = headers
+            except Exception as e:
+                log.error(f"Request.prepare | exception: {e}")
 
         # add content type if needed
         if (prepared.json is not None) and ('content-type' not in {k.lower(): v for k, v in prepared.headers.items()}):

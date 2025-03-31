@@ -22,11 +22,13 @@ class EnhancedSession(Session):
         class MySession(EnhancedSession):
             statemanager = MyStateManager
             headers = {"User-Agent": "MyClient/1.0"}
+            cookies = {"session_id": "abc123"}
             persistcookies = True
     """
     __declarativetype__ = 'session'
     statemanager: t.Optional[StateManager] = None
     persistcookies: bool = False
+    cookies: t.Optional[dict] = None
 
     def __init__(
             self,
@@ -34,6 +36,7 @@ class EnhancedSession(Session):
             auth: t.Optional[BaseAuth] = None,
             statemanager: t.Optional[StateManager] = None,
             headers: t.Optional[Headers] = None,
+            cookies: t.Optional[dict] = None,
             persistcookies: t.Optional[bool] = None,
             **kwargs
         ):
@@ -41,6 +44,7 @@ class EnhancedSession(Session):
         log.info(f"DEBUGGING ENHANCED SESSION INIT - Received auth: {auth}")
         from clientfactory.utils.internal.attribution import attributes
         sources = [self, self.__class__]
+
         # 1. create config if not provided
         if not config:
             config = SessionConfig()
@@ -71,7 +75,6 @@ class EnhancedSession(Session):
             else:
                 log.warning(f"EnhancedSession: failed to resolve auth from attributes from sources: {sources}")
 
-
         # 5. instantiate auth if its a class
         if (auth is not None) and inspect.isclass(auth):
             auth = auth()
@@ -79,14 +82,12 @@ class EnhancedSession(Session):
 
         # 6. initialize base session
         super().__init__(config, auth, **kwargs)
-
         log.info(f"DEBUGGING ENHANCED SESSION INIT - Base Session initialized, self.auth: {self.auth}")
-
 
         # 7. resolve remaining attributes
         remainingattrs = attributes.collect(
             self,
-            ['statemanager', 'persistcookies'],
+            ['statemanager', 'persistcookies', 'cookies'],
             includemetadata=True,
             includeconfig=False,
             includeparent=False,
@@ -102,6 +103,9 @@ class EnhancedSession(Session):
         if persistcookies is not None:
             log.info(f"EnhancedSession: overriding resolved persistcookies ({remainingattrs.get('persistcookies')}) with provided parameter: {persistcookies}")
             remainingattrs['persistcookies'] = persistcookies
+        if cookies is not None:
+            log.info(f"EnhancedSession: overriding resolved cookies ({remainingattrs.get('cookies')}) with provided parameter: {cookies}")
+            remainingattrs['cookies'] = cookies
 
         # 9. instantiate statemanager if necessary
         if ('statemanager' in remainingattrs):
@@ -112,7 +116,7 @@ class EnhancedSession(Session):
                     statestore = None
                     storeattr = attributes.resolve('store', [statemanagercls])
                     if storeattr:
-                        log.info(f"EnhancedSession: resolved statestore ({statestore.__class__.__name__}) from StateManager class: {statemanagercls.__class__.__name__}")
+                        log.info(f"EnhancedSession: resolved statestore ({storestore.__class__.__name__}) from StateManager class: {statemanagercls.__class__.__name__}")
                         if inspect.isclass(storeattr):
                             try:
                                 statestore = storeattr()
@@ -133,8 +137,6 @@ class EnhancedSession(Session):
                     log.error(f"EnhancedSession: failed to instantiate statemanager: {e}")
                     remainingattrs['statemanager'] = None
 
-
-
         # 10. set remaining attributes on self
         for k, v in remainingattrs.items():
             setattr(self, k, v)
@@ -145,6 +147,11 @@ class EnhancedSession(Session):
             if cookies:
                 self._session.cookies.update(cookies)
                 log.info(f"EnhancedSession: persistent cookies loaded from statemanager: {cookies}")
+
+        # 12. apply cookies if available
+        if hasattr(self, 'cookies') and self.cookies:
+            self._session.cookies.update(self.cookies)
+            log.info(f"EnhancedSession: applied cookies from attributes: {self.cookies}")
 
     def send(self, request: Request) -> Response:
         """Send request and handle cookie persistence"""

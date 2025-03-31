@@ -195,31 +195,32 @@ def headers(cls=None, *, static: t.Optional[dict] = None, dynamic: t.Optional[di
 
     return decorator if cls is None else decorator(cls)
 
-def session(cls=None, *, headers: t.Optional[Headers] = None, config: t.Optional[SessionConfig] = None):
+# ~/ClientFactory/src/clientfactory/decorators/session.py (update)
+
+def session(cls=None, **kwargs):
     """
-    Decorator for basic session configuration.
+    Decorator for session configuration.
 
-    Can be used with or without arguments:
-        @session
-        class MySession:
-            pass
+    Allows defining session configuration as a class:
 
-        @session(headers=MyHeaders())
-        class MySession:
-            pass
+    @session
+    class MySession:
+        headers = {"User-Agent": "Custom"}
+        cookies = {"session_id": "123"}
     """
-    metadata = {}
-    if headers is not None:
-        metadata['headers'] = headers
-    if config is not None:
-        metadata['config'] = config
-
     def decorator(cls):
+        from clientfactory.core.session import Session
+
+        # Create a new class with Session as base
         newcls = type(cls.__name__, (Session,), dict(cls.__dict__))
-        for k, v in metadata.items():
-            setattr(cls, k, v)
-        log.debug(f"session: converted ({cls.__name__}) to session")
+
+        # Apply any kwargs passed to the decorator
+        for k, v in kwargs.items():
+            newcls.setmetadata(k, v)
+            setattr(newcls, k, v)
+
         return newcls
+
     return decorator if cls is None else decorator(cls)
 
 

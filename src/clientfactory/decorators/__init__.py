@@ -33,6 +33,10 @@ from .session import (
     session, enhancedsession
 )
 
+from .backend import (
+    backend, graphql, algolia
+)
+
 """from .payload import (
     payload, EMPTY,  # $ for empty params
     # Parameter settings
@@ -67,6 +71,9 @@ __all__ = [
     'statestore', 'jsonstore', 'picklestore',
     'memorystore', 'statemanager', 'headers',
     'enhancedsession',
+
+    # Backend
+    'backend', 'graphql', 'algolia'
 
     # Payload
     #'payload', '$',

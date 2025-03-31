@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "clientfactory"
-version = "0.6.6"
+version = "0.6.9"
 description = "A framework for building API clients with minimal boilerplate"
 readme = "README.md"
 authors = [{name = "Joel Yisrael", email = "joel@highlyawear.com"}]

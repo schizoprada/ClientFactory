@@ -24,7 +24,7 @@ from .resource import (
     get, post, put, patch, delete
 )
 
-from clientfactory.log import log
+#from clientfactory.log import log
 ##log.remove() # remove logging during initialization
 
 __all__ = [

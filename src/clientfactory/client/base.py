@@ -107,7 +107,15 @@ class Client(DeclarativeContainer):
                 log.info(f"DEBUGGING SESSION CREATION - Session is a class")
                 log.info(f"DEBUGGING SESSION CREATION - Session class attrs: {[k for k in dir(customsession) if not k.startswith('_')]}")
 
-                instance = customsession()
+                # Create a session config that includes any cookies or headers from the client config
+                sessionconfig = SessionConfig(
+                    headers=self._config.headers,
+                    cookies=self._config.cookies,
+                    verify=self._config.verifyssl
+                )
+
+                # Create the session instance with auth and config
+                instance = customsession(auth=self._auth, config=sessionconfig)
 
                 log.info(f"DEBUGGING SESSION CREATION - Instantiated session: {instance}")
                 log.info(f"DEBUGGING SESSION CREATION - Session auth after init: {getattr(instance, 'auth', None)}")
@@ -116,6 +124,8 @@ class Client(DeclarativeContainer):
                 return instance
             log.info(f"DEBUGGING SESSION CREATION - Using existing session instance")
             return customsession
+
+        # Default session creation if no custom session is provided
         cfg = SessionConfig(
             headers=self._config.headers,
             cookies=self._config.cookies,

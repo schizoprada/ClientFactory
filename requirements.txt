@@ -3,3 +3,4 @@ click
 rich
 pytest
 loguru
+gql

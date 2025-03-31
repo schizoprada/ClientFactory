@@ -33,7 +33,7 @@ def declarative(cls=None, *, metadata: t.Optional[dict] = None):
         for k, v in metadata.items():
             newcls.setmetadata(k, v)
 
-        log.debug(f"declarative: converted ({cls.__name__}) to declarative component")
+        #log.debug(f"declarative: converted ({cls.__name__}) to declarative component")
         return newcls
 
     if cls is None:
@@ -89,7 +89,7 @@ def container(cls=None, *, metadata: t.Optional[dict] = None):
         for k, v in metadata.items():
             newcls.setmetadata(k, v)
 
-        log.debug(f"container: converted ({cls.__name__}) to declarative container")
+        #log.debug(f"container: converted ({cls.__name__}) to declarative container")
         return newcls
     if cls is None:
         return decorator

@@ -88,7 +88,7 @@ def searchresource(cls=None, **kwargs):
     from clientfactory.utils.internal import attributes
 
     def decorator(cls):
-        collectedattrs = attributes.collect(cls, ['payload', 'requestmethod', 'path', 'name'], includemetadata=True, includeconfig=True)
+        collectedattrs = attributes.collect(cls, ['payload', 'requestmethod', 'path', 'name', 'backend'], includemetadata=True, includeconfig=True)
         for k, v in kwargs.items():
             if k not in collectedattrs:
                 collectedattrs[k] = v
