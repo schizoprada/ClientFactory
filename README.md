@@ -252,7 +252,3 @@ Contributions are welcome! Feel free to submit a Pull Request with enhancements,
 ## License
 
 This project is licensed under the MIT License. See the LICENSE file for details.
-
----
-
-This expanded readme now includes detailed guidance on architecture, url construction, method execution sequence, and specifics about resource management, providing deeper insights for developers using ClientFactory.
