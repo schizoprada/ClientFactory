@@ -1,6 +1,9 @@
 # CHANGELOG
 
-## [0.6.9] -- *2024-01-02*
+## [0.7.1] -- *2025-04-22*
+fucking pypi brah
+
+## [0.6.9] -- *tbd*
 + jumped 3 versions bc 69
 + rebuilt from scratch with:
   - Comprehensive declarative framework
