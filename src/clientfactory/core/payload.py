@@ -41,7 +41,7 @@ class Parameter:
     transform: t.Optional[t.Callable[[t.Any], t.Any]] = None
     valuemap: t.Optional[t.Dict] = None
     mapmethod: t.Optional[t.Callable[[t.Any, t.Dict], t.Any]] = None
-
+    transient: bool = False
 
     def _validatetype(self, value: t.Any) -> bool:
         typemap = {
@@ -96,54 +96,56 @@ class Parameter:
 
     def _mapval(self, val: t.Any) -> t.Any:
         """Internal helper which maps a single value via valuemap, optionally using mapmethod."""
+        if val is None:
+            return val
         if self.valuemap is not None:
             if self.mapmethod is not None:
                 from fuzzywuzzy import process
-                print(f"Using mapmethod: {self.mapmethod.__name__} | with value: {val}")
+                #print(f"Using mapmethod: {self.mapmethod.__name__} | with value: {val}")
                 result = self.mapmethod(val, list(self.valuemap.keys()))
-                print(f"Mapmethod result: {result}")
+                #print(f"Mapmethod result: {result}")
                 if self.mapmethod == process.extractOne:
                     bestmatch = result[0]
-                    print(f"Extracted bestmatch: {bestmatch}")
+                    #print(f"Extracted bestmatch: {bestmatch}")
                     mapped = self.valuemap.get(bestmatch, bestmatch)
-                    print(f"Final mapped value: {mapped}")
+                    #print(f"Final mapped value: {mapped}")
                     return mapped
                 else:
-                    print(f"Using result directly: {result}")
+                    #print(f"Using result directly: {result}")
                     return result
             else:
-                print(f"Direct valuemap lookup")
+                #print(f"Direct valuemap lookup")
                 return self.valuemap.get(val, val)
-        print(f"No mapping applied, returning: {val}")
+        #print(f"No mapping applied, returning: {val}")
         return val
 
     def apply(self, value: t.Any) -> t.Any:
         """Apply validation and transformation to a value"""
         if (value is None) and (self.default is not None):
             value = cp.deepcopy(self.default)
-            print(f"Using default: {value}")
+            #print(f"Using default: {value}")
 
 
         if self.valuemap is not None:
-            print(f"Applying valuemap")
+            #print(f"Applying valuemap")
             if self.type == PT.ARRAY:
                 mapped = [self._mapval(v) for v in value]
-                print(f"Mapped array: {value} -> {mapped}")
+                #print(f"Mapped array: {value} -> {mapped}")
                 value = mapped
             else:
                 mapped = self._mapval(value)
-                print(f"Mapped value: {value} -> {mapped}")
+                #print(f"Mapped value: {value} -> {mapped}")
                 value = mapped
-            print(f"\nValue after mapping: {value}\n")
+            #print(f"\nValue after mapping: {value}\n")
 
-        print(f"About to validate: {value}")
+        #print(f"About to validate: {value}")
         self.validate(value)
-        print(f"Validation passed")
+        #print(f"Validation passed")
 
 
         if (self.transform is not None) and (value is not None):
             transformed = self.transform(value)
-            print(f"Transformed: {value} -> {transformed}")
+            #print(f"Transformed: {value} -> {transformed}")
             return transformed
 
         return value
@@ -264,21 +266,72 @@ class Payload:
         log.info(f"payload.apply: received data: {data}")
         self.validate(data)
         result = cp.deepcopy(self.static)
+        processingctx = {}
+
+        # First pass: process non-conditional parameters
         for attrname, param in self.parameters.items():
-            log.info(f"payload.apply: processing payload kwarg ({attrname}) with parameter: {param} ")
-            paramname = param.name if param.name is not None else attrname
-            if attrname in data:
-                processed = param.apply(data[attrname])
-                result[paramname] = processed
-            elif param.default is not None:
-                result[paramname] = cp.deepcopy(param.default)
+            if not isinstance(param, ConditionalParameter):
+                log.info(f"payload.apply: processing payload kwarg ({attrname}) with parameter: {param}")
+                paramname = param.name if param.name is not None else attrname
+
+                if attrname in data:
+                    value = data[attrname]
+                elif param.default is not None:
+                    value = cp.deepcopy(param.default)
+                else:
+                    value = None
+
+                processed = param.apply(value)
+                if processed is not None:
+                    processingctx[attrname] = processed
+                    if not getattr(param, 'transient', False):
+                        result[paramname] = processed
+
+        # Second pass: process conditional parameters in dependency order
+        conditionalparams = [
+            (name, param) for name, param in self.parameters.items()
+            if isinstance(param, ConditionalParameter)
+        ]
+
+        # Process until all conditionals are handled or no progress can be made
+        while conditionalparams:
+            processedthisround = []
+
+            for attrname, param in conditionalparams:
+                # Check if all dependencies are available
+                if all(dep in processingctx for dep in param.dependencies):
+                    log.info(f"payload.apply: processing conditional param ({attrname}) with parameter: {param}")
+                    paramname = param.name if param.name is not None else attrname
+
+                    if attrname in data:
+                        processed = param.apply(data[attrname], context=processingctx)
+                    else:
+                        processed = param.apply(None, context=processingctx)
+
+                    if processed is not None:
+                        processingctx[attrname] = processed
+                        if not getattr(param, 'transient', False):
+                            result[paramname] = processed
+
+                    processedthisround.append((attrname, param))
+
+            # Remove processed parameters from the list
+            for item in processedthisround:
+                conditionalparams.remove(item)
+
+            # If no parameters were processed this round and there are still some left,
+            # we have a circular dependency
+            if not processedthisround and conditionalparams:
+                remaining = [name for name, _ in conditionalparams]
+                raise ValidationError(f"Circular or missing dependencies in conditional parameters: {remaining}")
+
         if self.transform is not None and callable(self.transform):
             log.info(f"payload.apply: applying transform func ({self.transform.__name__})")
             result = self.transform(result)
             log.info(f"payload.apply: result after transform: {result}")
+
         log.info(f"payload.apply: returning result: {result}")
         return result
-
 
 class PayloadBuilder:
     """Builder for creating Payload instances with fluent configuration"""
@@ -288,7 +341,7 @@ class PayloadBuilder:
         self.parameters = {}
         self.static = {}
 
-    def addparam(self, name: str, **kwargs) -> PayloadBuidler:
+    def addparam(self, name: str, **kwargs) -> PayloadBuilder:
         """Add a parameter to the payload."""
         self.parameters[name] = Parameter(name=name, **kwargs)
         return self
@@ -487,3 +540,94 @@ class NestedPayload(Payload):
         result = self.static.copy()
         result[self.root] = processed
         return result
+
+class ConditionalParameter(Parameter):
+    """
+    Parameter whose attributes depend on the values of other parameters.
+
+    Attributes:
+        dependencies: List/tuple of parameter names this parameter depends on
+        conditions: Dict of condition functions that determine parameter behavior
+            Supported condition types:
+            - 'value': lambda *deps: value - Sets parameter value
+            - 'include': lambda *deps: bool - Determines if parameter should be included
+            - 'required': lambda *deps: bool - Determines if parameter is required
+            - 'validate': lambda value, *deps: bool - Additional validation based on dependencies
+    """
+    def __init__(self, dependencies: t.Sequence[str], conditions: t.Dict[str, t.Callable[..., t.Any]], **kwargs):
+        super().__init__(**kwargs)
+        self.dependencies = dependencies
+        self.conditions = conditions
+        self._validateconditions(conditions)
+
+    def _validateconditions(self, conditions: t.Dict[str, t.Callable[..., t.Any]]) -> None:
+        valid = {'value', 'include', 'required', 'validate'}
+        invalid = set(conditions.keys() - valid)
+        if invalid:
+            raise ValidationError(f"Invalid condition types: {invalid}. Must be one of: {valid}")
+
+    def _getdependentvals(self, data: dict) -> tuple:
+        try:
+            return tuple(data[dep] for dep in self.dependencies)
+        except KeyError as e:
+            raise ValidationError(f"Missing required dependency: {str(e)}")
+
+    def validate(self, value: t.Any) -> bool:
+        if hasattr(self, '_excluded') and self._excluded:
+            return True
+        return super().validate(value)
+
+    def apply(self, value: t.Any, context: t.Optional[dict] = None) -> t.Any:
+        if context is None:
+            raise ValidationError("Context required for conditional parameter")
+
+        depvals = self._getdependentvals(context)
+
+        if 'include' in self.conditions:
+            inclusion = self.conditions['include']
+            shouldinclude = inclusion(*depvals)
+            if not shouldinclude:
+                self._excluded = True
+                return None
+
+        if 'required' in self.conditions:
+            requirements = self.conditions['required']
+            self.required = requirements(*depvals)
+
+        if 'value' in self.conditions:
+            valuation = self.conditions['value']
+            value = valuation(*depvals)
+
+        value = super().apply(value)
+
+        if 'validate' in self.conditions:
+            validator = self.conditions['validate']
+            if not validator(value, *depvals):
+                raise ValidationError(
+                    f"Conditional validation failed for parameter '{self.name}'"
+                )
+
+        return value
+
+
+##  param types
+
+class StrParam(Parameter):
+    type = ParameterType.STRING
+
+class NumParam(Parameter):
+    type = ParameterType.NUMBER
+
+class BoolParam(Parameter):
+    type = ParameterType.BOOLEAN
+
+class ListParam(Parameter):
+    type = ParameterType.ARRAY
+    default = []
+
+class DictParam(Parameter):
+    type = ParameterType.OBJECT
+    default = {}
+
+class AnyParam(Parameter):
+    type = ParameterType.ANY

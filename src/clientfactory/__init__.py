@@ -30,7 +30,8 @@ from .core import (
     Parameter, NestedParameter, ParameterType,
     Payload, PayloadBuilder, PayloadTemplate,
     PayloadValidationError, ResourceError, MethodConfig,
-    Resource, ResourceConfig, ResourceBuilder
+    Resource, ResourceConfig, ResourceBuilder,
+    NestedPayload
 ) # using the HTTP decorators from decorators/
 
 from .decorators import (
@@ -77,7 +78,7 @@ __all__ = [
     "Parameter", "NestedParameter", "ParameterType",
     "Payload", "PayloadBuilder", "PayloadTemplate",
     "PayloadValidationError", "ResourceError", "MethodConfig",
-    "Resource", "ResourceConfig", "ResourceBuilder",
+    "Resource", "ResourceConfig", "ResourceBuilder", "NestedPayload",
 
     # decorators
     "resource", "searchresource", "managedresource",

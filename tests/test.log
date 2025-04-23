@@ -10755,3 +10755,203 @@
 2025-03-25 18:20:12 | DEBUG | DeclarativeMeta: _processclassattributes completed for (TestHeaders)
 2025-03-25 18:20:12 | DEBUG | DeclarativeMeta: completed creation of (TestHeaders) - metadata: {'getmetadata': <classmethod(<function DeclarativeComponent.getmetadata at 0x106117d80>)>, 'setmetadata': <classmethod(<function DeclarativeComponent.setmetadata at 0x106117e20>)>, 'hasmetadata': <classmethod(<function DeclarativeComponent.hasmetadata at 0x106117ec0>)>, 'updatemetdata': <classmethod(<function DeclarativeComponent.updatemetdata at 0x106117f60>)>, 'getallmetadata': <classmethod(<function DeclarativeComponent.getallmetadata at 0x106128040>)>, 'findmetadata': <classmethod(<function DeclarativeComponent.findmetadata at 0x1061280e0>)>, 'static': {'User-Agent': 'Test/1.0'}, 'dynamic': {}}
 2025-03-25 18:20:12 | DEBUG | headers: converted (TestHeaders) to headers configuration
+2025-04-06 11:28:44 | INFO | payload.apply: received data: {'keyword': 'test', 'brand': None, 'category': None}
+2025-04-06 11:28:44 | INFO | payload.apply: processing payload kwarg (keyword) with parameter: Parameter(name='keyword', type=<ParameterType.STRING: 'string'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None) 
+2025-04-06 11:28:44 | INFO | payload.apply: processing payload kwarg (brand) with parameter: Parameter(name='brand', type=<ParameterType.STRING: 'string'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None) 
+2025-04-06 11:28:44 | INFO | payload.apply: processing payload kwarg (category) with parameter: ConditionalParameter(name='category', type=<ParameterType.STRING: 'string'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None) 
+2025-04-06 11:31:59 | INFO | payload.apply: received data: {'keyword': 'test', 'brand': None, 'category': None}
+2025-04-06 11:31:59 | INFO | payload.apply: processing payload kwarg (keyword) with parameter: Parameter(name='keyword', type=<ParameterType.STRING: 'string'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None) 
+2025-04-06 11:31:59 | INFO | payload.apply: processing payload kwarg (brand) with parameter: Parameter(name='brand', type=<ParameterType.STRING: 'string'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None) 
+2025-04-06 11:31:59 | INFO | payload.apply: processing payload kwarg (category) with parameter: ConditionalParameter(name='category', type=<ParameterType.STRING: 'string'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None) 
+2025-04-06 11:31:59 | INFO | payload.apply: returning result: {'keyword': 'test'}
+2025-04-06 11:31:59 | INFO | payload.apply: received data: {'keyword': None, 'brand': 'nike', 'category': None}
+2025-04-06 11:31:59 | INFO | payload.apply: processing payload kwarg (keyword) with parameter: Parameter(name='keyword', type=<ParameterType.STRING: 'string'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None) 
+2025-04-06 11:31:59 | INFO | payload.apply: processing payload kwarg (brand) with parameter: Parameter(name='brand', type=<ParameterType.STRING: 'string'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None) 
+2025-04-06 11:31:59 | INFO | payload.apply: processing payload kwarg (category) with parameter: ConditionalParameter(name='category', type=<ParameterType.STRING: 'string'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None) 
+2025-04-06 11:31:59 | INFO | payload.apply: returning result: {'brand': 'nike', 'category': 'all'}
+2025-04-06 11:47:58 | INFO | payload.apply: received data: {}
+2025-04-06 11:47:58 | INFO | payload.apply: processing payload kwarg (visible) with parameter: Parameter(name='visible', type=<ParameterType.ANY: 'any'>, required=False, default='visible', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False) 
+2025-04-06 11:47:58 | INFO | payload.apply: processing payload kwarg (hidden) with parameter: Parameter(name='hidden', type=<ParameterType.ANY: 'any'>, required=False, default='hidden', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True) 
+2025-04-06 11:47:58 | INFO | payload.apply: returning result: {'visible': 'visible'}
+2025-04-06 11:47:58 | INFO | payload.apply: received data: {}
+2025-04-06 11:47:58 | INFO | payload.apply: processing payload kwarg (helper) with parameter: Parameter(name='helper', type=<ParameterType.ANY: 'any'>, required=False, default=100, description='', choices=None, transform=<function test_transient_with_transform.<locals>.<lambda> at 0x10460d080>, valuemap=None, mapmethod=None, transient=True) 
+2025-04-06 11:47:58 | INFO | payload.apply: processing payload kwarg (filter) with parameter: ConditionalParameter(name='filter', type=<ParameterType.ANY: 'any'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False) 
+2025-04-06 11:47:58 | INFO | payload.apply: returning result: {}
+2025-04-06 11:47:58 | INFO | payload.apply: received data: {}
+2025-04-06 11:47:58 | INFO | payload.apply: processing payload kwarg (minprice) with parameter: Parameter(name='minprice', type=<ParameterType.ANY: 'any'>, required=False, default=0, description='', choices=None, transform=<function TestPriceFilterExample.price_payload.<locals>.<lambda> at 0x10463a840>, valuemap=None, mapmethod=None, transient=True) 
+2025-04-06 11:47:58 | INFO | payload.apply: processing payload kwarg (maxprice) with parameter: Parameter(name='maxprice', type=<ParameterType.ANY: 'any'>, required=False, default=1000, description='', choices=None, transform=<function TestPriceFilterExample.price_payload.<locals>.<lambda> at 0x10463aac0>, valuemap=None, mapmethod=None, transient=True) 
+2025-04-06 11:47:58 | INFO | payload.apply: processing payload kwarg (filters) with parameter: ConditionalParameter(name='filters', type=<ParameterType.ANY: 'any'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False) 
+2025-04-06 11:47:58 | INFO | payload.apply: returning result: {}
+2025-04-06 11:47:58 | INFO | payload.apply: received data: {'minprice': 100, 'maxprice': 500}
+2025-04-06 11:47:58 | INFO | payload.apply: processing payload kwarg (minprice) with parameter: Parameter(name='minprice', type=<ParameterType.ANY: 'any'>, required=False, default=0, description='', choices=None, transform=<function TestPriceFilterExample.price_payload.<locals>.<lambda> at 0x10463aca0>, valuemap=None, mapmethod=None, transient=True) 
+2025-04-06 11:47:58 | INFO | payload.apply: processing payload kwarg (maxprice) with parameter: Parameter(name='maxprice', type=<ParameterType.ANY: 'any'>, required=False, default=1000, description='', choices=None, transform=<function TestPriceFilterExample.price_payload.<locals>.<lambda> at 0x10463ade0>, valuemap=None, mapmethod=None, transient=True) 
+2025-04-06 11:47:58 | INFO | payload.apply: processing payload kwarg (filters) with parameter: ConditionalParameter(name='filters', type=<ParameterType.ANY: 'any'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False) 
+2025-04-06 11:47:58 | INFO | payload.apply: returning result: {}
+2025-04-06 11:47:58 | INFO | payload.apply: received data: {}
+2025-04-06 11:47:58 | INFO | payload.apply: received data: {'helper': 'test'}
+2025-04-06 11:47:58 | INFO | payload.apply: processing payload kwarg (helper) with parameter: Parameter(name='helper', type=<ParameterType.ANY: 'any'>, required=True, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True) 
+2025-04-06 11:47:58 | INFO | payload.apply: processing payload kwarg (dependent) with parameter: ConditionalParameter(name='dependent', type=<ParameterType.ANY: 'any'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False) 
+2025-04-06 11:47:58 | INFO | payload.apply: returning result: {}
+2025-04-06 11:47:58 | INFO | payload.apply: received data: {}
+2025-04-06 11:47:58 | INFO | payload.apply: processing payload kwarg (normal1) with parameter: Parameter(name='normal1', type=<ParameterType.ANY: 'any'>, required=False, default='n1', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False) 
+2025-04-06 11:47:58 | INFO | payload.apply: processing payload kwarg (trans1) with parameter: Parameter(name='trans1', type=<ParameterType.ANY: 'any'>, required=False, default='t1', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True) 
+2025-04-06 11:47:58 | INFO | payload.apply: processing payload kwarg (normal2) with parameter: Parameter(name='normal2', type=<ParameterType.ANY: 'any'>, required=False, default='n2', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False) 
+2025-04-06 11:47:58 | INFO | payload.apply: processing payload kwarg (trans2) with parameter: Parameter(name='trans2', type=<ParameterType.ANY: 'any'>, required=False, default='t2', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True) 
+2025-04-06 11:47:58 | INFO | payload.apply: returning result: {'normal1': 'n1', 'normal2': 'n2'}
+2025-04-06 11:47:59 | INFO | payload.apply: received data: {}
+2025-04-06 11:47:59 | INFO | payload.apply: processing payload kwarg (helper) with parameter: Parameter(name='different_name', type=<ParameterType.ANY: 'any'>, required=False, default='value', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True) 
+2025-04-06 11:47:59 | INFO | payload.apply: returning result: {}
+2025-04-06 11:47:59 | INFO | payload.apply: received data: {'helper': 'not a number'}
+2025-04-06 11:47:59 | INFO | payload.apply: received data: {'helper': 123}
+2025-04-06 11:47:59 | INFO | payload.apply: processing payload kwarg (helper) with parameter: Parameter(name='helper', type=<ParameterType.NUMBER: 'number'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True) 
+2025-04-06 11:47:59 | INFO | payload.apply: returning result: {}
+2025-04-06 11:47:59 | INFO | payload.apply: received data: {}
+2025-04-06 11:47:59 | INFO | payload.apply: processing payload kwarg (t1) with parameter: Parameter(name='t1', type=<ParameterType.ANY: 'any'>, required=False, default='A', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True) 
+2025-04-06 11:47:59 | INFO | payload.apply: processing payload kwarg (t2) with parameter: Parameter(name='t2', type=<ParameterType.ANY: 'any'>, required=False, default='B', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True) 
+2025-04-06 11:47:59 | INFO | payload.apply: processing payload kwarg (t3) with parameter: Parameter(name='t3', type=<ParameterType.ANY: 'any'>, required=False, default='C', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True) 
+2025-04-06 11:47:59 | INFO | payload.apply: processing payload kwarg (combined) with parameter: ConditionalParameter(name='combined', type=<ParameterType.ANY: 'any'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False) 
+2025-04-06 11:47:59 | INFO | payload.apply: returning result: {}
+2025-04-06 11:47:59 | INFO | payload.apply: received data: {}
+2025-04-06 11:47:59 | INFO | payload.apply: processing payload kwarg (t1) with parameter: Parameter(name='t1', type=<ParameterType.ANY: 'any'>, required=False, default=5, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True) 
+2025-04-06 11:47:59 | INFO | payload.apply: processing payload kwarg (t2) with parameter: ConditionalParameter(name='t2', type=<ParameterType.ANY: 'any'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True) 
+2025-04-06 11:47:59 | INFO | payload.apply: processing payload kwarg (final) with parameter: ConditionalParameter(name='final', type=<ParameterType.ANY: 'any'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False) 
+2025-04-06 11:47:59 | INFO | payload.apply: returning result: {}
+2025-04-06 11:52:58 | INFO | payload.apply: received data: {}
+2025-04-06 11:52:58 | INFO | payload.apply: processing payload kwarg (visible) with parameter: Parameter(name='visible', type=<ParameterType.ANY: 'any'>, required=False, default='visible', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False) 
+2025-04-06 11:52:58 | INFO | payload.apply: processing payload kwarg (hidden) with parameter: Parameter(name='hidden', type=<ParameterType.ANY: 'any'>, required=False, default='hidden', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True) 
+2025-04-06 11:52:58 | INFO | payload.apply: returning result: {'visible': 'visible'}
+2025-04-06 11:52:58 | INFO | payload.apply: received data: {}
+2025-04-06 11:52:58 | INFO | payload.apply: processing payload kwarg (helper) with parameter: Parameter(name='helper', type=<ParameterType.ANY: 'any'>, required=False, default=100, description='', choices=None, transform=<function test_transient_with_transform.<locals>.<lambda> at 0x1055ccfe0>, valuemap=None, mapmethod=None, transient=True) 
+2025-04-06 11:52:58 | INFO | payload.apply: processing payload kwarg (filter) with parameter: ConditionalParameter(name='filter', type=<ParameterType.ANY: 'any'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False) 
+2025-04-06 11:52:58 | INFO | payload.apply: returning result: {'filter': [100]}
+2025-04-06 11:52:58 | INFO | payload.apply: received data: {}
+2025-04-06 11:52:58 | INFO | payload.apply: processing payload kwarg (minprice) with parameter: Parameter(name='minprice', type=<ParameterType.ANY: 'any'>, required=False, default=0, description='', choices=None, transform=<function TestPriceFilterExample.price_payload.<locals>.<lambda> at 0x105703880>, valuemap=None, mapmethod=None, transient=True) 
+2025-04-06 11:52:58 | INFO | payload.apply: processing payload kwarg (maxprice) with parameter: Parameter(name='maxprice', type=<ParameterType.ANY: 'any'>, required=False, default=1000, description='', choices=None, transform=<function TestPriceFilterExample.price_payload.<locals>.<lambda> at 0x105703b00>, valuemap=None, mapmethod=None, transient=True) 
+2025-04-06 11:52:58 | INFO | payload.apply: processing payload kwarg (filters) with parameter: ConditionalParameter(name='filters', type=<ParameterType.ANY: 'any'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False) 
+2025-04-06 11:52:58 | INFO | payload.apply: returning result: {'filters': '[0, 1000]'}
+2025-04-06 11:52:58 | INFO | payload.apply: received data: {'minprice': 100, 'maxprice': 500}
+2025-04-06 11:52:58 | INFO | payload.apply: processing payload kwarg (minprice) with parameter: Parameter(name='minprice', type=<ParameterType.ANY: 'any'>, required=False, default=0, description='', choices=None, transform=<function TestPriceFilterExample.price_payload.<locals>.<lambda> at 0x105703ce0>, valuemap=None, mapmethod=None, transient=True) 
+2025-04-06 11:52:58 | INFO | payload.apply: processing payload kwarg (maxprice) with parameter: Parameter(name='maxprice', type=<ParameterType.ANY: 'any'>, required=False, default=1000, description='', choices=None, transform=<function TestPriceFilterExample.price_payload.<locals>.<lambda> at 0x105703e20>, valuemap=None, mapmethod=None, transient=True) 
+2025-04-06 11:52:58 | INFO | payload.apply: processing payload kwarg (filters) with parameter: ConditionalParameter(name='filters', type=<ParameterType.ANY: 'any'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False) 
+2025-04-06 11:52:58 | INFO | payload.apply: returning result: {'filters': '["price>=100", "price<=500"]'}
+2025-04-06 11:52:58 | INFO | payload.apply: received data: {}
+2025-04-06 11:52:58 | INFO | payload.apply: received data: {'helper': 'test'}
+2025-04-06 11:52:58 | INFO | payload.apply: processing payload kwarg (helper) with parameter: Parameter(name='helper', type=<ParameterType.ANY: 'any'>, required=True, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True) 
+2025-04-06 11:52:58 | INFO | payload.apply: processing payload kwarg (dependent) with parameter: ConditionalParameter(name='dependent', type=<ParameterType.ANY: 'any'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False) 
+2025-04-06 11:52:58 | INFO | payload.apply: returning result: {'dependent': 'TEST'}
+2025-04-06 11:52:58 | INFO | payload.apply: received data: {}
+2025-04-06 11:52:58 | INFO | payload.apply: processing payload kwarg (normal1) with parameter: Parameter(name='normal1', type=<ParameterType.ANY: 'any'>, required=False, default='n1', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False) 
+2025-04-06 11:52:58 | INFO | payload.apply: processing payload kwarg (trans1) with parameter: Parameter(name='trans1', type=<ParameterType.ANY: 'any'>, required=False, default='t1', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True) 
+2025-04-06 11:52:58 | INFO | payload.apply: processing payload kwarg (normal2) with parameter: Parameter(name='normal2', type=<ParameterType.ANY: 'any'>, required=False, default='n2', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False) 
+2025-04-06 11:52:58 | INFO | payload.apply: processing payload kwarg (trans2) with parameter: Parameter(name='trans2', type=<ParameterType.ANY: 'any'>, required=False, default='t2', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True) 
+2025-04-06 11:52:58 | INFO | payload.apply: returning result: {'normal1': 'n1', 'normal2': 'n2'}
+2025-04-06 11:52:58 | INFO | payload.apply: received data: {}
+2025-04-06 11:52:58 | INFO | payload.apply: processing payload kwarg (helper) with parameter: Parameter(name='different_name', type=<ParameterType.ANY: 'any'>, required=False, default='value', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True) 
+2025-04-06 11:52:58 | INFO | payload.apply: returning result: {}
+2025-04-06 11:52:58 | INFO | payload.apply: received data: {'helper': 'not a number'}
+2025-04-06 11:52:58 | INFO | payload.apply: received data: {'helper': 123}
+2025-04-06 11:52:58 | INFO | payload.apply: processing payload kwarg (helper) with parameter: Parameter(name='helper', type=<ParameterType.NUMBER: 'number'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True) 
+2025-04-06 11:52:58 | INFO | payload.apply: returning result: {}
+2025-04-06 11:52:58 | INFO | payload.apply: received data: {}
+2025-04-06 11:52:58 | INFO | payload.apply: processing payload kwarg (t1) with parameter: Parameter(name='t1', type=<ParameterType.ANY: 'any'>, required=False, default='A', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True) 
+2025-04-06 11:52:58 | INFO | payload.apply: processing payload kwarg (t2) with parameter: Parameter(name='t2', type=<ParameterType.ANY: 'any'>, required=False, default='B', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True) 
+2025-04-06 11:52:58 | INFO | payload.apply: processing payload kwarg (t3) with parameter: Parameter(name='t3', type=<ParameterType.ANY: 'any'>, required=False, default='C', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True) 
+2025-04-06 11:52:58 | INFO | payload.apply: processing payload kwarg (combined) with parameter: ConditionalParameter(name='combined', type=<ParameterType.ANY: 'any'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False) 
+2025-04-06 11:52:58 | INFO | payload.apply: returning result: {'combined': 'A-B-C'}
+2025-04-06 11:52:58 | INFO | payload.apply: received data: {}
+2025-04-06 11:52:58 | INFO | payload.apply: processing payload kwarg (t1) with parameter: Parameter(name='t1', type=<ParameterType.ANY: 'any'>, required=False, default=5, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True) 
+2025-04-06 11:52:58 | INFO | payload.apply: processing payload kwarg (t2) with parameter: ConditionalParameter(name='t2', type=<ParameterType.ANY: 'any'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True) 
+2025-04-06 11:52:58 | INFO | payload.apply: processing payload kwarg (final) with parameter: ConditionalParameter(name='final', type=<ParameterType.ANY: 'any'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False) 
+2025-04-06 11:54:05 | INFO | payload.apply: received data: {}
+2025-04-06 11:54:05 | INFO | payload.apply: processing payload kwarg (visible) with parameter: Parameter(name='visible', type=<ParameterType.ANY: 'any'>, required=False, default='visible', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False)
+2025-04-06 11:54:05 | INFO | payload.apply: processing payload kwarg (hidden) with parameter: Parameter(name='hidden', type=<ParameterType.ANY: 'any'>, required=False, default='hidden', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True)
+2025-04-06 11:54:05 | INFO | payload.apply: returning result: {'visible': 'visible'}
+2025-04-06 11:54:05 | INFO | payload.apply: received data: {}
+2025-04-06 11:54:05 | INFO | payload.apply: processing payload kwarg (helper) with parameter: Parameter(name='helper', type=<ParameterType.ANY: 'any'>, required=False, default=100, description='', choices=None, transform=<function test_transient_with_transform.<locals>.<lambda> at 0x1066acfe0>, valuemap=None, mapmethod=None, transient=True)
+2025-04-06 11:54:05 | INFO | payload.apply: processing payload kwarg (filter) with parameter: ConditionalParameter(name='filter', type=<ParameterType.ANY: 'any'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False)
+2025-04-06 11:54:05 | INFO | payload.apply: returning result: {'filter': ['value>=100']}
+2025-04-06 11:54:05 | INFO | payload.apply: received data: {}
+2025-04-06 11:54:05 | INFO | payload.apply: processing payload kwarg (minprice) with parameter: Parameter(name='minprice', type=<ParameterType.ANY: 'any'>, required=False, default=0, description='', choices=None, transform=<function TestPriceFilterExample.price_payload.<locals>.<lambda> at 0x1066ae3e0>, valuemap=None, mapmethod=None, transient=True)
+2025-04-06 11:54:05 | INFO | payload.apply: processing payload kwarg (maxprice) with parameter: Parameter(name='maxprice', type=<ParameterType.ANY: 'any'>, required=False, default=1000, description='', choices=None, transform=<function TestPriceFilterExample.price_payload.<locals>.<lambda> at 0x1066ae2a0>, valuemap=None, mapmethod=None, transient=True)
+2025-04-06 11:54:05 | INFO | payload.apply: processing payload kwarg (filters) with parameter: ConditionalParameter(name='filters', type=<ParameterType.ANY: 'any'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False)
+2025-04-06 11:54:05 | INFO | payload.apply: returning result: {'filters': '["price>=0", "price<=1000"]'}
+2025-04-06 11:54:05 | INFO | payload.apply: received data: {'minprice': 100, 'maxprice': 500}
+2025-04-06 11:54:05 | INFO | payload.apply: processing payload kwarg (minprice) with parameter: Parameter(name='minprice', type=<ParameterType.ANY: 'any'>, required=False, default=0, description='', choices=None, transform=<function TestPriceFilterExample.price_payload.<locals>.<lambda> at 0x1066ad080>, valuemap=None, mapmethod=None, transient=True)
+2025-04-06 11:54:05 | INFO | payload.apply: processing payload kwarg (maxprice) with parameter: Parameter(name='maxprice', type=<ParameterType.ANY: 'any'>, required=False, default=1000, description='', choices=None, transform=<function TestPriceFilterExample.price_payload.<locals>.<lambda> at 0x1066ae160>, valuemap=None, mapmethod=None, transient=True)
+2025-04-06 11:54:05 | INFO | payload.apply: processing payload kwarg (filters) with parameter: ConditionalParameter(name='filters', type=<ParameterType.ANY: 'any'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False)
+2025-04-06 11:54:05 | INFO | payload.apply: returning result: {'filters': '["price>=100", "price<=500"]'}
+2025-04-06 11:54:05 | INFO | payload.apply: received data: {}
+2025-04-06 11:54:05 | INFO | payload.apply: received data: {'helper': 'test'}
+2025-04-06 11:54:05 | INFO | payload.apply: processing payload kwarg (helper) with parameter: Parameter(name='helper', type=<ParameterType.ANY: 'any'>, required=True, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True)
+2025-04-06 11:54:05 | INFO | payload.apply: processing payload kwarg (dependent) with parameter: ConditionalParameter(name='dependent', type=<ParameterType.ANY: 'any'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False)
+2025-04-06 11:54:05 | INFO | payload.apply: returning result: {'dependent': 'TEST'}
+2025-04-06 11:54:05 | INFO | payload.apply: received data: {}
+2025-04-06 11:54:05 | INFO | payload.apply: processing payload kwarg (normal1) with parameter: Parameter(name='normal1', type=<ParameterType.ANY: 'any'>, required=False, default='n1', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False)
+2025-04-06 11:54:05 | INFO | payload.apply: processing payload kwarg (trans1) with parameter: Parameter(name='trans1', type=<ParameterType.ANY: 'any'>, required=False, default='t1', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True)
+2025-04-06 11:54:05 | INFO | payload.apply: processing payload kwarg (normal2) with parameter: Parameter(name='normal2', type=<ParameterType.ANY: 'any'>, required=False, default='n2', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False)
+2025-04-06 11:54:05 | INFO | payload.apply: processing payload kwarg (trans2) with parameter: Parameter(name='trans2', type=<ParameterType.ANY: 'any'>, required=False, default='t2', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True)
+2025-04-06 11:54:05 | INFO | payload.apply: returning result: {'normal1': 'n1', 'normal2': 'n2'}
+2025-04-06 11:54:05 | INFO | payload.apply: received data: {}
+2025-04-06 11:54:05 | INFO | payload.apply: processing payload kwarg (helper) with parameter: Parameter(name='different_name', type=<ParameterType.ANY: 'any'>, required=False, default='value', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True)
+2025-04-06 11:54:05 | INFO | payload.apply: returning result: {}
+2025-04-06 11:54:05 | INFO | payload.apply: received data: {'helper': 'not a number'}
+2025-04-06 11:54:05 | INFO | payload.apply: received data: {'helper': 123}
+2025-04-06 11:54:05 | INFO | payload.apply: processing payload kwarg (helper) with parameter: Parameter(name='helper', type=<ParameterType.NUMBER: 'number'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True)
+2025-04-06 11:54:05 | INFO | payload.apply: returning result: {}
+2025-04-06 11:54:05 | INFO | payload.apply: received data: {}
+2025-04-06 11:54:05 | INFO | payload.apply: processing payload kwarg (t1) with parameter: Parameter(name='t1', type=<ParameterType.ANY: 'any'>, required=False, default='A', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True)
+2025-04-06 11:54:05 | INFO | payload.apply: processing payload kwarg (t2) with parameter: Parameter(name='t2', type=<ParameterType.ANY: 'any'>, required=False, default='B', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True)
+2025-04-06 11:54:05 | INFO | payload.apply: processing payload kwarg (t3) with parameter: Parameter(name='t3', type=<ParameterType.ANY: 'any'>, required=False, default='C', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True)
+2025-04-06 11:54:05 | INFO | payload.apply: processing payload kwarg (combined) with parameter: ConditionalParameter(name='combined', type=<ParameterType.ANY: 'any'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False)
+2025-04-06 11:54:05 | INFO | payload.apply: returning result: {'combined': 'A-B-C'}
+2025-04-06 11:54:05 | INFO | payload.apply: received data: {}
+2025-04-06 11:54:05 | INFO | payload.apply: processing payload kwarg (t1) with parameter: Parameter(name='t1', type=<ParameterType.ANY: 'any'>, required=False, default=5, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True)
+2025-04-06 11:54:05 | INFO | payload.apply: processing payload kwarg (t2) with parameter: ConditionalParameter(name='t2', type=<ParameterType.ANY: 'any'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True)
+2025-04-06 11:54:05 | INFO | payload.apply: processing payload kwarg (final) with parameter: ConditionalParameter(name='final', type=<ParameterType.ANY: 'any'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False)
+2025-04-06 11:55:37 | INFO | payload.apply: received data: {}
+2025-04-06 11:55:37 | INFO | payload.apply: processing payload kwarg (visible) with parameter: Parameter(name='visible', type=<ParameterType.ANY: 'any'>, required=False, default='visible', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False)
+2025-04-06 11:55:37 | INFO | payload.apply: processing payload kwarg (hidden) with parameter: Parameter(name='hidden', type=<ParameterType.ANY: 'any'>, required=False, default='hidden', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True)
+2025-04-06 11:55:37 | INFO | payload.apply: returning result: {'visible': 'visible'}
+2025-04-06 11:55:37 | INFO | payload.apply: received data: {}
+2025-04-06 11:55:37 | INFO | payload.apply: processing payload kwarg (helper) with parameter: Parameter(name='helper', type=<ParameterType.ANY: 'any'>, required=False, default=100, description='', choices=None, transform=<function test_transient_with_transform.<locals>.<lambda> at 0x1026ed120>, valuemap=None, mapmethod=None, transient=True)
+2025-04-06 11:55:37 | INFO | payload.apply: processing conditional param (filter) with parameter: ConditionalParameter(name='filter', type=<ParameterType.ANY: 'any'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False)
+2025-04-06 11:55:37 | INFO | payload.apply: returning result: {'filter': ['value>=100']}
+2025-04-06 11:55:37 | INFO | payload.apply: received data: {}
+2025-04-06 11:55:37 | INFO | payload.apply: processing payload kwarg (minprice) with parameter: Parameter(name='minprice', type=<ParameterType.ANY: 'any'>, required=False, default=0, description='', choices=None, transform=<function TestPriceFilterExample.price_payload.<locals>.<lambda> at 0x1026ee520>, valuemap=None, mapmethod=None, transient=True)
+2025-04-06 11:55:37 | INFO | payload.apply: processing payload kwarg (maxprice) with parameter: Parameter(name='maxprice', type=<ParameterType.ANY: 'any'>, required=False, default=1000, description='', choices=None, transform=<function TestPriceFilterExample.price_payload.<locals>.<lambda> at 0x1026ee3e0>, valuemap=None, mapmethod=None, transient=True)
+2025-04-06 11:55:37 | INFO | payload.apply: processing conditional param (filters) with parameter: ConditionalParameter(name='filters', type=<ParameterType.ANY: 'any'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False)
+2025-04-06 11:55:37 | INFO | payload.apply: returning result: {'filters': '["price>=0", "price<=1000"]'}
+2025-04-06 11:55:37 | INFO | payload.apply: received data: {'minprice': 100, 'maxprice': 500}
+2025-04-06 11:55:37 | INFO | payload.apply: processing payload kwarg (minprice) with parameter: Parameter(name='minprice', type=<ParameterType.ANY: 'any'>, required=False, default=0, description='', choices=None, transform=<function TestPriceFilterExample.price_payload.<locals>.<lambda> at 0x1026ed1c0>, valuemap=None, mapmethod=None, transient=True)
+2025-04-06 11:55:37 | INFO | payload.apply: processing payload kwarg (maxprice) with parameter: Parameter(name='maxprice', type=<ParameterType.ANY: 'any'>, required=False, default=1000, description='', choices=None, transform=<function TestPriceFilterExample.price_payload.<locals>.<lambda> at 0x1026ee2a0>, valuemap=None, mapmethod=None, transient=True)
+2025-04-06 11:55:37 | INFO | payload.apply: processing conditional param (filters) with parameter: ConditionalParameter(name='filters', type=<ParameterType.ANY: 'any'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False)
+2025-04-06 11:55:37 | INFO | payload.apply: returning result: {'filters': '["price>=100", "price<=500"]'}
+2025-04-06 11:55:37 | INFO | payload.apply: received data: {}
+2025-04-06 11:55:37 | INFO | payload.apply: received data: {'helper': 'test'}
+2025-04-06 11:55:37 | INFO | payload.apply: processing payload kwarg (helper) with parameter: Parameter(name='helper', type=<ParameterType.ANY: 'any'>, required=True, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True)
+2025-04-06 11:55:37 | INFO | payload.apply: processing conditional param (dependent) with parameter: ConditionalParameter(name='dependent', type=<ParameterType.ANY: 'any'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False)
+2025-04-06 11:55:37 | INFO | payload.apply: returning result: {'dependent': 'TEST'}
+2025-04-06 11:55:37 | INFO | payload.apply: received data: {}
+2025-04-06 11:55:37 | INFO | payload.apply: processing payload kwarg (normal1) with parameter: Parameter(name='normal1', type=<ParameterType.ANY: 'any'>, required=False, default='n1', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False)
+2025-04-06 11:55:37 | INFO | payload.apply: processing payload kwarg (trans1) with parameter: Parameter(name='trans1', type=<ParameterType.ANY: 'any'>, required=False, default='t1', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True)
+2025-04-06 11:55:37 | INFO | payload.apply: processing payload kwarg (normal2) with parameter: Parameter(name='normal2', type=<ParameterType.ANY: 'any'>, required=False, default='n2', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False)
+2025-04-06 11:55:37 | INFO | payload.apply: processing payload kwarg (trans2) with parameter: Parameter(name='trans2', type=<ParameterType.ANY: 'any'>, required=False, default='t2', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True)
+2025-04-06 11:55:37 | INFO | payload.apply: returning result: {'normal1': 'n1', 'normal2': 'n2'}
+2025-04-06 11:55:37 | INFO | payload.apply: received data: {}
+2025-04-06 11:55:37 | INFO | payload.apply: processing payload kwarg (helper) with parameter: Parameter(name='different_name', type=<ParameterType.ANY: 'any'>, required=False, default='value', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True)
+2025-04-06 11:55:37 | INFO | payload.apply: returning result: {}
+2025-04-06 11:55:37 | INFO | payload.apply: received data: {'helper': 'not a number'}
+2025-04-06 11:55:37 | INFO | payload.apply: received data: {'helper': 123}
+2025-04-06 11:55:37 | INFO | payload.apply: processing payload kwarg (helper) with parameter: Parameter(name='helper', type=<ParameterType.NUMBER: 'number'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True)
+2025-04-06 11:55:37 | INFO | payload.apply: returning result: {}
+2025-04-06 11:55:37 | INFO | payload.apply: received data: {}
+2025-04-06 11:55:37 | INFO | payload.apply: processing payload kwarg (t1) with parameter: Parameter(name='t1', type=<ParameterType.ANY: 'any'>, required=False, default='A', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True)
+2025-04-06 11:55:37 | INFO | payload.apply: processing payload kwarg (t2) with parameter: Parameter(name='t2', type=<ParameterType.ANY: 'any'>, required=False, default='B', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True)
+2025-04-06 11:55:37 | INFO | payload.apply: processing payload kwarg (t3) with parameter: Parameter(name='t3', type=<ParameterType.ANY: 'any'>, required=False, default='C', description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True)
+2025-04-06 11:55:37 | INFO | payload.apply: processing conditional param (combined) with parameter: ConditionalParameter(name='combined', type=<ParameterType.ANY: 'any'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False)
+2025-04-06 11:55:37 | INFO | payload.apply: returning result: {'combined': 'A-B-C'}
+2025-04-06 11:55:37 | INFO | payload.apply: received data: {}
+2025-04-06 11:55:37 | INFO | payload.apply: processing payload kwarg (t1) with parameter: Parameter(name='t1', type=<ParameterType.ANY: 'any'>, required=False, default=5, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True)
+2025-04-06 11:55:37 | INFO | payload.apply: processing conditional param (t2) with parameter: ConditionalParameter(name='t2', type=<ParameterType.ANY: 'any'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=True)
+2025-04-06 11:55:37 | INFO | payload.apply: processing conditional param (final) with parameter: ConditionalParameter(name='final', type=<ParameterType.ANY: 'any'>, required=False, default=None, description='', choices=None, transform=None, valuemap=None, mapmethod=None, transient=False)
+2025-04-06 11:55:37 | INFO | payload.apply: returning result: {'final': 15}

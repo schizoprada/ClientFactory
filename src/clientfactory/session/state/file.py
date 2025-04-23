@@ -69,10 +69,25 @@ class PickleStateStore(FileStateStore):
     format = "pickle"
 
     def _read(self) -> dict:
+        from requests import Session
         try:
+            print(f"PickleStateStore: Reading file from {self.filepath}")
             with open(self.filepath, 'rb') as f:
-                return pickle.load(f)
+                data = pickle.load(f)
+                print(f"PickleStateStore: Loaded data type: {type(data)}")
+                if isinstance(data, Session):
+                    from requests.utils import dict_from_cookiejar
+                    headers = dict(data.headers)
+                    cookies = dict_from_cookiejar(data.cookies)
+                    print(f"PickleStateStore: Converted Session - headers count: {len(headers)}, cookies count: {len(cookies)}")
+                    return {
+                        'headers': headers,
+                        'cookies': cookies
+                    }
+                print(f"PickleStateStore: Data is not a Session, is dict? {isinstance(data, dict)}")
+                return data if isinstance(data, dict) else {}
         except Exception as e:
+            print(f"PickleStateStore: Error reading state: {e}")
             raise StateError(f"Failed to read pickle state: {e}")
 
     def _write(self, state: dict) -> None:

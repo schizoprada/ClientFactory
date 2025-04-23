@@ -18,6 +18,8 @@ from clientfactory.resources.base import SpecializedResource
 from clientfactory.backends.base import Backend, BackendType
 
 
+T = t.TypeVar('T')
+
 @dataclass
 class SearchResourceConfig(ResourceConfig):
     """Configuration for search resources"""
@@ -25,7 +27,7 @@ class SearchResourceConfig(ResourceConfig):
     requestmethod: RequestMethod = RM.GET
     backend: t.Optional[Backend] = None
 
-class SearchResource(SpecializedResource):
+class SearchResource(SpecializedResource, t.Generic[T]):
     """
     Resource implementation specialized for search operations.
 
@@ -91,6 +93,43 @@ class SearchResource(SpecializedResource):
             )
 
 
+    def _gendocs(self, payload):
+        """Dynamically generate docstring for search method based on payload parameters"""
+        if not payload:
+            return "Search method with no specified parameters"
+        lines = ["Search Params: "]
+        lines.append("-------------")
+
+        if hasattr(payload, 'parameters'):
+            for name, param in payload.parameters.items():
+                paramtype = param.type.value if hasattr(param, 'type') else "Any"
+                default = f" (default: {param.default})" if hasattr(param, 'default') and param.default is not None else ""
+                required = " [required]" if hasattr(param, 'required') and param.required else ""
+                description = param.description if hasattr(param, 'description') and param.description else ""
+                lines.append(f"{name} : {paramtype}{required}{default}")
+                if description:
+                    lines.append(f"    {description}")
+
+        # Handle nested payload
+        if hasattr(payload, 'root') and hasattr(payload, 'static'):
+            lines.append("")
+            lines.append("This search uses a nested payload structure.")
+            lines.append(f"Root field: {payload.root}")
+
+            if payload.static:
+                lines.append("")
+                lines.append("Static parameters (automatically included):")
+                for key, value in payload.static.items():
+                    lines.append(f"    {key}: {value}")
+
+        # Add return value documentation
+        lines.append("")
+        lines.append("Returns:")
+        lines.append("--------")
+        lines.append("Response")
+        lines.append("    The API response containing search results.")
+
+        return "\n".join(lines)
 
     def _setupspecialized(self):
         if (not hasattr(self, "search")) and ("search" not in self._config.methods):
@@ -101,18 +140,26 @@ class SearchResource(SpecializedResource):
 
             payload = attributes.resolve('payload', sources)
             log.debug(f"Resolved payload: {payload}")
+            setattr(self, "payload", payload)
+
 
             method = attributes.resolve('requestmethod', sources, default=RM.GET)
             log.debug(f"Resolved requestmethod: {method}")
+
+            docstring = self._gendocs(payload)
+
 
             methodconfig = MethodConfig(
                 name="search",
                 method=method,
                 path=None,
-                payload=payload
+                payload=payload,
+                description=docstring
             )
             self._config.methods["search"] = methodconfig
             callablemethod = self._createmethod(methodconfig)
+            callablemethod.__doc__ = docstring
+
             setattr(self, "search", callablemethod)
             if self.oncall:
                 self.__call__ = callablemethod

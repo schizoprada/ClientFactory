@@ -36,6 +36,9 @@ def resource(
 
     def decorator(cls):
         classtype = (variant or Resource)
+
+        # type checking
+        cls._resourcetype = classtype
         if isinstance(cls, type) and issubclass(cls, classtype):
             for k, v in metadata.items():
                 cls.setmetadata(k, v)
@@ -71,8 +74,7 @@ def resource(
             if hasattr(method, '_methodconfig'):
                 newcls._resourceconfig.methods[mname] = method._methodconfig
 
-        if variant is not None:
-            newcls._resourcetype = variant
+        newcls._resourcetype = (variant or Resource)
 
         log.debug(f"resource: created resource ({newcls.__name__}) with path: {resourcepath}")
         return newcls
@@ -82,7 +84,7 @@ def resource(
     return decorator(cls)
 
 
-def searchresource(cls=None, **kwargs):
+def searchresource(cls=None, config: t.Optional[t.Union[ResourceConfig, t.Type[ResourceConfig]]] = None, **kwargs):
     """Decorator for search resources"""
     from clientfactory.resources.search import SearchResource
     from clientfactory.utils.internal import attributes

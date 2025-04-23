@@ -22,7 +22,7 @@ def setup_logging():
     )
     # Optional: Also log to stderr for immediate visibility
     logger.add(
-        lambda msg: print(msg, end=""),  # Print to console
+        lambda msg: print(msg, end=""),  # #print to console
         level="DEBUG",
         format="{level} | {message}"
     )

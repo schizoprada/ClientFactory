@@ -1,6 +1,19 @@
 # CHANGELOG
 
-## [0.6.6] -- *2025-xx-xx* // IN PROGRESS
+## [0.6.9] -- *2024-01-02*
++ jumped 3 versions bc 69
++ rebuilt from scratch with:
+  - Comprehensive declarative framework
+  - Extensive auth support (Basic, Token, API Key, OAuth, JWT, DPoP)
+  - Protocol-specific backends:
+    * GraphQL support with query validation
+    * Algolia multi-index search
+  - Parameter validation and transformation
+  - Session state management
+  - Enhanced payload system
+  - Support for specialized resources (Search, Managed)
+
+## [0.6.6] -- *2025-xx-xx*
 - added `baseurl` attribute to `ResourceConfig` for client resources not attached to the parent `Client` baseurl e.g. media servers, etc.
 - added abbreviation access to `RequestMethod` enum members in `utils/__init__.py`
 

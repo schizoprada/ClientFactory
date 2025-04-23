@@ -16,7 +16,11 @@ from .session import (
 from .payload import (
     ParameterType, Parameter, NestedParameter,
     Payload, PayloadBuilder, PayloadTemplate,
-    ValidationError as PayloadValidationError
+    ValidationError as PayloadValidationError,
+    NestedPayload, ConditionalParameter,
+    StrParam, NumParam, BoolParam,
+    ListParam, DictParam, AnyParam
+
 )
 from .resource import (
     ResourceError, MethodConfig, ResourceConfig,
@@ -38,5 +42,7 @@ __all__ = [
     'PayloadValidationError', 'ResourceError', 'MethodConfig',
     'ResourceConfig', 'Resource', 'ResourceBuilder',
     'decoratormethod', 'get', 'post',
-    'put', 'patch', 'delete'
+    'put', 'patch', 'delete', 'NestedPayload',
+    'StrParam', 'NumParam', 'BoolParam',
+    'ListParam', 'DictParam', 'AnyParam'
 ]

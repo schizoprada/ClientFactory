@@ -20,6 +20,9 @@ from clientfactory.client.config import ClientConfig
 from clientfactory.declarative import DeclarativeContainer
 
 
+T = t.TypeVar('T', bound='Resource')
+
+
 class ClientError(Exception):
     """Base exception raised for client related errors."""
     pass
@@ -33,8 +36,10 @@ class Client(DeclarativeContainer):
     """
     __declarativetype__ = 'client'
     baseurl: str = ""
-    auth: t.Optional[BaseAuth] = None
+    auth: t.Optional[t.Union[BaseAuth, t.Type[BaseAuth]]] = None
     config: t.Optional[ClientConfig] = None
+
+    __resources__: t.ClassVar[t.Dict[str, t.Type[Resource]]] = {}
 
     def __init__(self, baseurl: t.Optional[str] = None, auth: t.Optional[BaseAuth] = None, config: t.Optional[ClientConfig] = None):
         """Initialize a new client instance"""
@@ -96,6 +101,35 @@ class Client(DeclarativeContainer):
             log.debug("CREATED DEFAULT SESSION")
         self._resources: dict[str, Resource] = {}
         self._discoverresources()
+
+    def __init_subclass__(cls, **kwargs) -> None:
+        super().__init_subclass__(**kwargs)
+        cls.__resources__ = {}
+
+        dictitems = list(cls.__dict__.items())
+
+        for name, value in dictitems:
+            if (
+                inspect.isclass(value) and
+                hasattr(value, '_resourceconfig') and
+                hasattr(value, '_resourcetype')
+            ):
+                # register for type check
+                resourcetype = value._resourcetype
+                cls.__resources__[name.lower()] = resourcetype
+
+
+                # add type annotation to class
+                if not hasattr(cls, '__annotations__'):
+                    cls.__annotations__ = {}
+                cls.__annotations__[name.lower()] = resourcetype
+
+    def __getattr__(self, name: str) -> t.Any:
+        rsrcs = self.__dict__.get('_resources')
+        if rsrcs and name in rsrcs:
+            return rsrcs[name]
+        raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
+
 
     def _createsession(self) -> Session:
         """Create a new session"""

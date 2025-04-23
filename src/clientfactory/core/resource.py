@@ -63,15 +63,27 @@ class Resource(DeclarativeContainer):
     backend: t.Optional[Backend] = None
 
 
-    def  __init__(self, session: Session, config: ResourceConfig, backend: t.Optional[Backend] = None):
+    def  __init__(self, session: Session, config: ResourceConfig, attributes: t.Optional[dict] = None, backend: t.Optional[Backend] = None):
         self._session = session
         self._config = config
         #log.debug(f"Initializing resource: {config.name} with path: {config.path}")
         #log.debug(f"Resource parent: {config.parent}")
-
+        self._attributes = (attributes or {})
+        self._processattributes(config)
         self._backend = (backend or getattr(config, 'backend', None))
 
         self._setup()
+
+    def _processattributes(self, config: ResourceConfig):
+        from clientfactory.utils.internal import attributes
+        if hasattr(self, '_attributes') and self._attributes:
+            attributes.apply(
+                config,
+                self._attributes,
+                overwrite=True,
+                applytoconfig=True,
+                applytometadata=False
+            )
 
     def _getfullpath(self, path: t.Optional[str] = None) -> str:
         """Construct full resource path including parents"""

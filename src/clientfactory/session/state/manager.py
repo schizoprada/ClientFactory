@@ -22,7 +22,7 @@ class StateManager(DeclarativeComponent):
             autosave = True
     """
     __declarativetype__ = 'statemanager'
-    store: t.Optional[StateStore] = None
+    store: t.Optional[t.Union[StateStore, t.Type[StateStore]]] = None
     autoload: bool = True
     autosave: bool = True
 
@@ -39,6 +39,13 @@ class StateManager(DeclarativeComponent):
         if store is None:
             store = attributes.resolve('store', sources)
             log.info(f"StateManager: store resolved from sources: {store}")
+            if (store is not None) and inspect.isclass(store):
+                try:
+                    store = store()
+                    log.info(f"StateManager: instantiated store ({store.__class__.__name__})")
+                except Exception as e:
+                    log.error(f"StateManager: error instantiating store: {e}")
+                    store = None
         if autoload is None:
             autoload = attributes.resolve('autoload', sources, default=True)
             log.info(f"StateManager: autoload resolved from sources: {autoload}")
@@ -49,14 +56,6 @@ class StateManager(DeclarativeComponent):
         self.autoload = autoload
         self.autosave = autosave
         self._state = {}
-
-        if (store is not None) and inspect.isclass(store):
-            try:
-                store = store()
-                log.info(f"StateManager: instantiated store ({store.__class__.__name__})")
-            except Exception as e:
-                log.error(f"StateManager: error instantiating store: {e}")
-                store = None
         self.store = store
 
         if self.store and self.autoload:
@@ -68,12 +67,17 @@ class StateManager(DeclarativeComponent):
     def load(self) -> None:
         """Load state from storage"""
         if not self.store:
+            print("StateManager: No state store configured")
             raise StateError("No state store configured")
         try:
             self._state = self.store.load()
-            log.debug(f"Loaded state from {self.store.__class__.__name__}")
+            print(f"StateManager: Loaded state with keys: {list(self._state.keys())}")
+            if 'headers' in self._state:
+                print(f"StateManager: Headers loaded, count: {len(self._state['headers'])}")
+            if 'cookies' in self._state:
+                print(f"StateManager: Cookies loaded, count: {len(self._state['cookies'])}")
         except Exception as e:
-            log.error(f"Failed to load state: {e}")
+            print(f"StateManager: Failed to load state: {e}")
             raise StateError(f"Failed to load state: {e}")
 
     def save(self) -> None:

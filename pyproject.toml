@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "clientfactory"
-version = "0.6.9"
+version = "0.7.0"
 description = "A framework for building API clients with minimal boilerplate"
 readme = "README.md"
 authors = [{name = "Joel Yisrael", email = "joel@highlyawear.com"}]
@@ -30,7 +30,9 @@ dependencies = [
     "typing-extensions>=4.0.0",
     "fuzzywuzzy>=0.18.0",
     "python-Levenshtein>=0.20.9",
-    "PyJWT>=2.0.0"  # Added for JWT support
+    "PyJWT>=2.0.0",
+    "gql>=3.4.0",  # Added for GraphQL support
+    "graphql-core>=3.2.0"  # Required by gql
 ]
 
 [project.optional-dependencies]

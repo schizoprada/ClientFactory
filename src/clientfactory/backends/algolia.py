@@ -19,8 +19,8 @@ class AlgoliaConfig:
     @property
     def endpoint(self) -> str:
         endpoint = f"https://{self.appid}-dsn.algolia.net/1/indexes/*/queries"
-        print(f"\nAlgoliaConfig.endpoint:")
-        print(f"Generated endpoint: {endpoint}")
+        #print(f"\nAlgoliaConfig.endpoint:")
+        #print(f"Generated endpoint: {endpoint}")
         return endpoint
 
     @property
@@ -31,8 +31,8 @@ class AlgoliaConfig:
             'x-algolia-application-id': self.appid,
             'content-type': 'application/x-www-form-urlencoded'
         }
-        print(f"\nAlgoliaConfig.headers:")
-        print(f"Generated headers: {headers}")
+        #print(f"\nAlgoliaConfig.headers:")
+        #print(f"Generated headers: {headers}")
         return headers
 
 class AlgoliaError(Exception):
@@ -51,12 +51,12 @@ class Algolia(Backend):
         apikey: t.Optional[str] = None,
         indices: t.Optional[list[str]] = None
     ):
-        print(f"\nAlgolia.__init__:")
-        print(f"Initializing with:")
-        print(f"config: {config}")
-        print(f"appid: {appid}")
-        print(f"apikey: {apikey}")
-        print(f"indices: {indices}")
+        #print(f"\nAlgolia.__init__:")
+        #print(f"Initializing with:")
+        #print(f"config: {config}")
+        #print(f"appid: {appid}")
+        #print(f"apikey: {apikey}")
+        #print(f"indices: {indices}")
 
         super().__init__(BackendType.ALGOLIA, RequestMethod.POST)
         if config is None:
@@ -68,12 +68,12 @@ class Algolia(Backend):
                 indices=indices
             )
         self.config = config
-        print(f"Initialized with config: {self.config}")
+        #print(f"Initialized with config: {self.config}")
 
     def preparerequest(self, request: Request, data: dict) -> Request:
-        print(f"\nAlgolia.preparerequest:")
-        print(f"Initial request: {request}")
-        print(f"Received data: {data}")
+        #print(f"\nAlgolia.preparerequest:")
+        #print(f"Initial request: {request}")
+        #print(f"Received data: {data}")
 
         requests = [
             {
@@ -82,20 +82,20 @@ class Algolia(Backend):
             }
             for index in self.config.indices
         ]
-        print(f"Built requests array: {requests}")
+        #print(f"Built requests array: {requests}")
 
         payload = {
             "requests": requests
         }
-        print(f"Created payload: {payload}")
+        #print(f"Created payload: {payload}")
 
         agentparam = urllib.parse.urlencode({'x-algolia-agent': self.config.agent})
         url = f"{self.config.endpoint}?{agentparam}"
-        print(f"Constructed URL: {url}")
+        #print(f"Constructed URL: {url}")
 
         headers = dict(request.headers or {})
         headers.update(self.config.headers)
-        print(f"Final headers: {headers}")
+        #print(f"Final headers: {headers}")
 
 
 
@@ -106,26 +106,26 @@ class Algolia(Backend):
             data=json.dumps(payload),
             params={}
         )
-        print(f"Final request: {cloned}")
+        #print(f"Final request: {cloned}")
         return cloned
 
     def _responseprocessor(self, response: Response) -> t.Any:
         """Process Algolia response"""
-        print(f"\nAlgolia._responseprocessor:")
-        print(f"Processing response: {response}")
-        print(f"Status code: {response.statuscode}")
+        #print(f"\nAlgolia._responseprocessor:")
+        #print(f"Processing response: {response}")
+        #print(f"Status code: {response.statuscode}")
 
         if not response.ok:
-            print(f"Response not OK, raising for status")
+            #print(f"Response not OK, raising for status")
             response.raiseforstatus()
 
         data = response.json()
-        print(f"Response data: {data}")
+        #print(f"Response data: {data}")
 
         if "message" in data and "status" in data and data["status"] >= 400:
-            print(f"Error in response: {data['message']}")
+            #print(f"Error in response: {data['message']}")
             raise AlgoliaError(f"Algolia Error: {data['message']}")
 
         results = data.get('results', data)
-        print(f"Returning results: {results}")
+        #print(f"Returning results: {results}")
         return results

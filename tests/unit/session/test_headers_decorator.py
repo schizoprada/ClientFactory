@@ -49,16 +49,16 @@ def test_headers_decorator_update():
     """Test updating headers after creation"""
     import traceback
     from clientfactory.decorators.session import headers
-    print("\nDebugging headers decorator:")
-    print(f"headers import: {headers}")
+    #print("\nDebugging headers decorator:")
+    #print(f"headers import: {headers}")
 
     try:
         @headers(static={"User-Agent": "Test/1.0"})
         class TestHeaders:
             pass
     except Exception as e:
-        print(f"Exception during decoration: {e}")
-        print("Traceback:")
+        #print(f"Exception during decoration: {e}")
+        #print("Traceback:")
         traceback.print_exc()
         raise
 
@@ -66,6 +66,6 @@ def test_headers_decorator_update():
     h.update({"Accept": "application/json"})
 
     result = h.get()
-    print(f"Final headers: {result}")
+    #print(f"Final headers: {result}")
     assert result["User-Agent"] == "Test/1.0"
     assert result["Accept"] == "application/json"
